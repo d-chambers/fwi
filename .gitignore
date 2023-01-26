@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+
+
+# pycharm
+.idea
+
+# Ipython stuff
+# Dont commit ipython notebooks, just use md.
+.ipynb_checkpoints
+*.ipynb
+
+# linux/osx garbage
+*~
+*.swp
+.DS_store*
+
+# docs
+docs/api/*
+_autosummary
+.quarto/
+docs/site_libs
+*.html
+report_files
+libs
+*pdf
+*png
+*tex
