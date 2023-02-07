@@ -1,6 +1,6 @@
 ---
 title: "GPGN 598A: Assignment #1"
-subtitle: Heat Equation Finite Differences 
+subtitle: Heat Equation Finite Differences
 date: 2023-01-22
 author:
   - name: Derrick Chambers
@@ -54,12 +54,12 @@ Using @eq-heat-simplified, letting $U_j^n = U(x, t) = U(x_0 + j\Delta x , t_0 + 
 
 
 $$
-T^{n+1}_{j} = T^n_j + D_j\frac{\Delta t}{\Delta x^2} \underbrace{(T^n_{j+1} - 2 T^n_j + T^{n}_{j-1})}_\textrm{A} 
-+ \frac{\Delta t}{4 \Delta x^2 \rho_j c_{p_j}} 
+T^{n+1}_{j} = T^n_j + D_j\frac{\Delta t}{\Delta x^2} \underbrace{(T^n_{j+1} - 2 T^n_j + T^{n}_{j-1})}_\textrm{A}
++ \frac{\Delta t}{4 \Delta x^2 \rho_j c_{p_j}}
 \underbrace{(T^n_{j+1} - T^n_{j-1})}_\textrm{B} \underbrace{(k_{j+1}^n - k_{j-1}^n)}_\textrm{C}
 $${#eq-ftcs}
 
-Where A, B, and C all operate on the same time step and can be efficiently implemented as 1D convolution operators. 
+Where A, B, and C all operate on the same time step and can be efficiently implemented as 1D convolution operators.
 Also note, when k is constant the second term in the RHS vanishes.
 
 Running the simulation for the requested time steps (0.40, 0.45, 0.55, 0.6) $\frac{\Delta x^2}{D}$, and using an
@@ -67,8 +67,8 @@ initial temperature pulse of 400k, results in the following:
 
 ![Problem 1 Results](problem_1.png){#fig-explicit_results}
 
-Clearly, from the figure above, numerical instability is occuring the for cases when $\Delta t = 0.55 \frac{\Delta x^2}{D}$ 
-and $\Delta t = 0.6 \frac{\Delta x^2}{D}$. 
+Clearly, from the figure above, numerical instability is occuring the for cases when $\Delta t = 0.55 \frac{\Delta x^2}{D}$
+and $\Delta t = 0.6 \frac{\Delta x^2}{D}$.
 
 
 # Problem 2: Explicit versus Implicit Scheme
@@ -77,7 +77,7 @@ Assuming only homogenous diffusivity, taking the central difference in space and
 in time, and letting $C=D\frac{\Delta t}{\Delta x^2}$ @eq-heat-simplified reduces to:
 
 $$
-T^{n-1}_j = -C T^n_{j+1} + (2C + 1) T^n_j - C T^{n}_{j-1} 
+T^{n-1}_j = -C T^n_{j+1} + (2C + 1) T^n_j - C T^{n}_{j-1}
 $${#eq-btcs}
 
 
@@ -123,7 +123,7 @@ $$
 $${#eq-btcs_matrix_eq}
 
 and since $\underline{\underline{A}}$ doesn't depend on time, and in this case space,
-its inverse can be calculated once and applied for each time step, making the process 
+its inverse can be calculated once and applied for each time step, making the process
 very efficient. However, in the non-homegenous case the matrix inversion may become
 more complicated.
 
@@ -132,7 +132,7 @@ For the case in problem 1, this results in the following results:
 ![Problem 2 Results](problem_2.png){#fig-implicit_results}
 
 The implicit scheme produced stable results regardless of the timestep, but for the stable cases
-in the explicit scheme @fig-explicit_results, the results are very similar to the implicit results. 
+in the explicit scheme @fig-explicit_results, the results are very similar to the implicit results.
 
 The explicit scheme from problem 1, however, is conditionally stable.
 
@@ -145,11 +145,11 @@ problem, excpet the spatial deriviates are taken by averaging the the current ti
 such that:
 
 $$
--\frac{C}{2} T^n_{i-1} + [1 + C] T^n_i - \frac{C}{2} T^n_{i+1} = 
+-\frac{C}{2} T^n_{i-1} + [1 + C] T^n_i - \frac{C}{2} T^n_{i+1} =
 \frac{C}{2} T^{n-1}_{i-1} + [1 - C] T^{n-1}_i - \frac{C}{2} T^{n-1}_{i+1}
 $${#eq-cn_1}
 
-Which has the results in 
+Which has the results in
 
 $$
 \underline{\underline{D}}^{ } \underline{T^n} = \underline{\underline{E}}^{ } \underline{T^{n-1}}
@@ -192,4 +192,3 @@ Which results in very similar results to the implicit solution from Problem 2 ex
 numerical error.
 
 ![Problem 3 Results](problem_3.png){#fig-cn_results}
-

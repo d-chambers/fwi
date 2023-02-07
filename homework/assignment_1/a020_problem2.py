@@ -5,9 +5,7 @@ from functools import partial
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from heat_fdif import Simulation1D, heat_btcs
-
 from plotting import plot_simulations
 
 
@@ -54,10 +52,12 @@ if __name__ == "__main__":
         )
         out = heat_btcs(sim)
         cols_to_plot = get_plot_columns(out)
-        fig, _ = plot_simulations(out, axes=sub_axes, fig=fig, cols_to_plot=cols_to_plot)
+        fig, _ = plot_simulations(
+            out, axes=sub_axes, fig=fig, cols_to_plot=cols_to_plot
+        )
         sub_axes[0].set_title(f"dt={dt:.02f}" + r"$\frac{\Delta x^2}{D}$")
     # label time steps
     for ax, dt in zip(axes[:, 0], cols_to_plot.values):
         ax.set_ylabel(f"t={int(dt):d}s")
     plt.tight_layout()
-    fig.savefig('problem_2.png', dpi=300)
+    fig.savefig("problem_2.png", dpi=300)

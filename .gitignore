@@ -1,8 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
-
-
 # pycharm
 .idea
 
@@ -27,3 +25,25 @@ libs
 *pdf
 *png
 *tex
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# binaries (need to compile these for each installation)
+bin/
+bin_mpi/

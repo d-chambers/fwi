@@ -3,12 +3,9 @@ Finite difference solutions to the heat equation.
 """
 import dataclasses
 from functools import cached_property
-from typing import Union, Dict, List, Callable, Literal, Optional
-
-from dataclasses import dataclass
+from typing import Callable, List, Literal, Optional, Union
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 
 
@@ -42,6 +39,7 @@ class Simulation1D:
         A list of dt values to save as snap shots. Can also be a literal
         string "all" to save all output.
     """
+
     # x coordinate definitions
     x_min: float
     x_max: float
@@ -53,7 +51,7 @@ class Simulation1D:
     # other inputs
     bc_func: Optional[Callable] = None
     initial_func: Optional[callable] = None
-    times_to_save: Union[List[float], Literal['all']] = 'all'
+    times_to_save: Union[List[float], Literal["all"]] = "all"
     # outputs defined by solvers
     # results_: Optional[pd.DataFrame]
 
@@ -77,8 +75,8 @@ class Simulation1D:
     def results_(self):
         """Get the results stored so far, clear intermediate cache."""
         results = pd.DataFrame(self._temp_cache)
-        results.columns.name = 't'
-        results.index.name = 'x'
+        results.columns.name = "t"
+        results.index.name = "x"
         self._temp_cache = {}
         return results
 
@@ -97,7 +95,7 @@ class Simulation1D:
 
     def maybe_store_results(self, time, results):
         """Maybe store the results is specified by times_to_save."""
-        save_all = self.times_to_save == 'all'
+        save_all = self.times_to_save == "all"
         if save_all or time in self.times_to_save:
             self._temp_cache[time] = results
 
@@ -105,7 +103,7 @@ class Simulation1D:
 def moving_window(ar, stencil, zero_edge_effects=True):
     """Apply the convolution on array."""
     # need to time reverse stencil
-    out = np.convolve(ar, stencil[::-1], mode='same')
+    out = np.convolve(ar, stencil[::-1], mode="same")
     # zero edges
     if zero_edge_effects:
         end_in = len(stencil) // 2
@@ -115,10 +113,10 @@ def moving_window(ar, stencil, zero_edge_effects=True):
 
 
 def heat_ftcs(
-        sim: Simulation1D,
-        density=1.0,
-        specific_heat=1.0,
-        thermal_conductivity=1.0,
+    sim: Simulation1D,
+    density=1.0,
+    specific_heat=1.0,
+    thermal_conductivity=1.0,
 ) -> pd.DataFrame:
     """
     Run 1D finite difference heat equation.
@@ -137,7 +135,7 @@ def heat_ftcs(
         The thermal conductivity in W / (K m)
     """
     # Get initial values.
-    x_vals, t_vals = sim.x_grid, sim.t_grid
+    _, t_vals = sim.x_grid, sim.t_grid
     dt, dx = sim.dt, sim.dx
     temp_current = sim.get_initial_values()
     thermal = np.broadcast_to(thermal_conductivity, np.shape(temp_current))
@@ -164,11 +162,12 @@ def make_A(C, x_vals):
     out = np.zeros((len(x_vals), len(x_vals)))
     center = np.arange(len(x_vals))
     # Fill in diags
-    out[center, center] = 2*C + 1
+    out[center, center] = 2 * C + 1
     # now off diags
     out[center[:-1], center[1:]] = -C
     out[center[1:], center[:-1]] = -C
-    return out 
+    return out
+
 
 def make_D(C, x_vals):
     """Makes the A matrix which needs to be inverted."""
@@ -179,9 +178,10 @@ def make_D(C, x_vals):
     # Fill in diags
     out[center, center] = 1 + C
     # now off diags
-    out[center[:-1], center[1:]] = -C/2
-    out[center[1:], center[:-1]] = -C/2
-    return out 
+    out[center[:-1], center[1:]] = -C / 2
+    out[center[1:], center[:-1]] = -C / 2
+    return out
+
 
 def make_E(C, x_vals):
     """Makes the A matrix which needs to be inverted."""
@@ -192,16 +192,16 @@ def make_E(C, x_vals):
     # Fill in diags
     out[center, center] = 1 - C
     # now off diags
-    out[center[:-1], center[1:]] = C/2
-    out[center[1:], center[:-1]] = C/2
-    return out 
+    out[center[:-1], center[1:]] = C / 2
+    out[center[1:], center[:-1]] = C / 2
+    return out
 
 
 def heat_btcs(
-        sim: Simulation1D,
-        density=1.0,
-        specific_heat=1.0,
-        thermal_conductivity=1.0,
+    sim: Simulation1D,
+    density=1.0,
+    specific_heat=1.0,
+    thermal_conductivity=1.0,
 ) -> pd.DataFrame:
     """
     Run 1D finite difference heat equation.
@@ -225,7 +225,7 @@ def heat_btcs(
     temp_current = sim.get_initial_values()
     thermal = np.broadcast_to(thermal_conductivity, np.shape(temp_current))
     diffusivity = thermal / (density * specific_heat)
-    C = (diffusivity * dt) / (dx ** 2)
+    C = (diffusivity * dt) / (dx**2)
     A = make_A(C, x_vals)
     A_inv = np.linalg.inv(A)
     # Run simulation.
@@ -237,10 +237,10 @@ def heat_btcs(
 
 
 def heat_crank_nicolson(
-        sim: Simulation1D,
-        density=1.0,
-        specific_heat=1.0,
-        thermal_conductivity=1.0,
+    sim: Simulation1D,
+    density=1.0,
+    specific_heat=1.0,
+    thermal_conductivity=1.0,
 ) -> pd.DataFrame:
     """
     Run 1D finite difference heat equation.
@@ -264,7 +264,7 @@ def heat_crank_nicolson(
     temp_current = sim.get_initial_values()
     thermal = np.broadcast_to(thermal_conductivity, np.shape(temp_current))
     diffusivity = thermal / (density * specific_heat)
-    C = (diffusivity * dt) / (dx ** 2)
+    C = (diffusivity * dt) / (dx**2)
     D = make_D(C, x_vals)
     E = make_E(C, x_vals)
     D_inv_E = np.linalg.inv(D) @ E
