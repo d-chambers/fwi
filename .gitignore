@@ -7,7 +7,6 @@ __pycache__/
 # Ipython stuff
 # Dont commit ipython notebooks, just use md.
 .ipynb_checkpoints
-*.ipynb
 
 # linux/osx garbage
 *~
