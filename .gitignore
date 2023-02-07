@@ -46,3 +46,4 @@ var/
 # binaries (need to compile these for each installation)
 bin/
 bin_mpi/
+OUTPUT_FILES/

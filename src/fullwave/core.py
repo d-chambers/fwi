@@ -17,7 +17,13 @@ def read_trace(filename):
     # get station name from the filename
     net, sta, comp, *_ = filename.split("/")[-1].split(".")
     delta = times[1] - times[0]
-    headers = {"station": sta, "network": net, "channel": comp, "delta": delta, "b": times[0]}
+    headers = {
+        "station": sta,
+        "network": net,
+        "channel": comp,
+        "delta": delta,
+        "b": times[0],
+    }
     return obspy.Trace(disp, headers)
 
 
@@ -37,8 +43,8 @@ def specfem_write_parameters(filename, parameters, output_file=None):
 
     for varname, value in parameters.items():
         pat = re.compile(
-            r"(^{varname}\s*=\s*)([^#$\s]+)".format(varname=varname),
-            re.MULTILINE)
+            r"(^{varname}\s*=\s*)([^#$\s]+)".format(varname=varname), re.MULTILINE
+        )
         pars = pat.sub(r"\g<1>{value}".format(value=value), pars)
 
     if output_file is None:
@@ -51,20 +57,14 @@ def specfem_write_parameters(filename, parameters, output_file=None):
 def specfem2D_prep_save_forward(filename=None):
     if filename is None:
         filename = "./DATA/Par_file"
-    params = {
-        "SIMULATION_TYPE": 1,
-        "SAVE_FORWARD": ".true."
-    }
+    params = {"SIMULATION_TYPE": 1, "SAVE_FORWARD": ".true."}
     specfem_write_parameters(filename, params)
 
 
 def specfem2D_prep_adjoint(filename=None):
     if filename is None:
         filename = "./DATA/Par_file"
-    params = {
-        "SIMULATION_TYPE": 3,
-        "SAVE_FORWARD": ".false."
-    }
+    params = {"SIMULATION_TYPE": 3, "SAVE_FORWARD": ".false."}
     specfem_write_parameters(filename, params)
 
 
@@ -81,7 +81,7 @@ def grid(x, y, z, resX=100, resY=100):
     # mlab version
     # Z = griddata(x, y, z, xi, yi, interp='linear')
     # scipy version
-    Z = griddata((x, y), z, (xi[None, :], yi[:, None]), method='cubic')
+    Z = griddata((x, y), z, (xi[None, :], yi[:, None]), method="cubic")
 
     X, Y = np.meshgrid(xi, yi)
     return X, Y, Z
