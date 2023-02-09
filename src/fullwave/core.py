@@ -1,10 +1,17 @@
 """
 Core functions for full wave.
 """
+import contextlib
+import os
 import re
+from pathlib import Path
+from subprocess import run
 
 import numpy as np
 import obspy
+
+BASE_PATH = Path(__file__).parent.parent.parent
+BIN_PATH = BASE_PATH / "bin"
 
 
 # Some utility functions (written by Ridvan Orsvuran)
@@ -85,3 +92,38 @@ def grid(x, y, z, resX=100, resY=100):
 
     X, Y = np.meshgrid(xi, yi)
     return X, Y, Z
+
+
+@contextlib.contextmanager
+def change_dir(new):
+    """Change directory to new, then back to current."""
+    target = Path(new)
+    current = Path.cwd()
+    os.chdir(target)
+    yield
+    os.chdir(current)
+
+
+def _call_bin(cwd, name):
+    cwd = Path(cwd or Path().cwd()).absolute()
+    with change_dir(cwd):
+        bin_path = BIN_PATH / name
+        assert bin_path.exists()
+        output = run(str(bin_path), shell=True, capture_output=True)
+        print(output.stdout.decode("utf-8"))
+        print(output.stderr.decode("utf-8"))
+    return output
+
+
+def mesh(cwd=None):
+    """Run the mesher."""
+    return _call_bin(cwd, "xmeshfem2D")
+
+
+def specfem(cwd=None):
+    """Run specfem."""
+    return _call_bin(cwd, "xspecfem2D")
+
+
+if __name__ == "__main__":
+    mesh()

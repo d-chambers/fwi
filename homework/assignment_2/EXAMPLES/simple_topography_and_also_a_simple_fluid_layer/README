@@ -8,7 +8,7 @@ TO RUN:
 
 0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
 
-1. in SPECFEM2D root directory, configure, e.g., 
+1. in SPECFEM2D root directory, configure, e.g.,
    ./configure FC=gfortran
 
 2. compile:
@@ -22,4 +22,3 @@ TO RUN:
 5. check out the output files in the local directory OUTPUT_FILES
 
 ----------------------------------------------------------------------
-
