@@ -19,23 +19,23 @@
 
  --------
  Material #           1  isotropic
- rho,cp,cs   =    2700.0000000000000        3000.0000000000000        1800.0000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    2700.0000000000000        3000.0000000000000        1800.0000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
  Material #           2  isotropic
- rho,cp,cs   =    2500.0000000000000        2700.0000000000000        0.0000000000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    2500.0000000000000        2700.0000000000000        0.0000000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is fluid
  --------
  Material #           3  isotropic
- rho,cp,cs   =    2200.0000000000000        2500.0000000000000        1443.3750000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    2200.0000000000000        2500.0000000000000        1443.3750000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
  Material #           4  isotropic
- rho,cp,cs   =    2200.0000000000000        2200.0000000000000        1343.3750000000000     
- Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    2200.0000000000000        2200.0000000000000        1343.3750000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
  Material is solid
  --------
 
@@ -61,15 +61,15 @@
  IZ from            1  to           80
  Material #            1  isotropic
  Material is solid
- vp     =    3000.00000    
- vs     =    1800.00000    
- rho    =    2700.00000    
- Poisson's ratio =   0.218750000    
- QKappa =    9999.00000    
- Qmu    =    9999.00000    
+ vp     =    3000.00000
+ vs     =    1800.00000
+ rho    =    2700.00000
+ Poisson's ratio =   0.218750000
+ QKappa =    9999.00000
+ Qmu    =    9999.00000
  ------
 
- Parameter file successfully read 
+ Parameter file successfully read
 
 
  Mesh from internal meshing:
@@ -85,16 +85,16 @@
  Reading in SOURCE file...
 
  Source           1
-   Position xs, zs =    1000.0000000000000        2000.0000000000000     
+   Position xs, zs =    1000.0000000000000        2000.0000000000000
 
    Source type (1=force, 2=moment tensor):            1
    Force source:
-   Angle of the source (deg) =    0.0000000000000000     
+   Angle of the source (deg) =    0.0000000000000000
 
    Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           1
    Ricker wavelet (second-derivative):
-   Frequency, delay =    10.000000000000000        0.0000000000000000     
-   Multiplying factor  =    10000000000.000000     
+   Frequency, delay =    10.000000000000000        0.0000000000000000
+   Multiplying factor  =    10000000000.000000
 
  all sources are okay
 
@@ -112,9 +112,9 @@
    number of elements with absorbing boundaries =          320
 
 
- Mesh dimensions: 
-   Min and max value of X in the grid =    0.0000000000000000        4000.0000000000000     
-   Min and max value of Z in the grid =    0.0000000000000000        4000.0000000000000     
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        4000.0000000000000
+   Min and max value of Z in the grid =    0.0000000000000000        4000.0000000000000
 
  Mesh partitioning:
    decomposing mesh using NPROC =            1
@@ -155,7 +155,6 @@
 
  Target positions (x,z) of the            1  receivers
 
- Receiver            1  =    180081.41000000000        388768.71000000002     
+ Receiver            1  =    180081.41000000000        388768.71000000002
 
  This will be a serial simulation
-

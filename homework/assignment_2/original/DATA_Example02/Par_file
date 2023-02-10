@@ -252,7 +252,7 @@ nbmodels                        = 1
 #       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-1 -1 0 0 0.5 0 0 0 0 0 0 0 0 0 0  
+1 -1 0 0 0.5 0 0 0 0 0 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
@@ -421,4 +421,3 @@ BROADCAST_SAME_MESH_AND_MODEL   = .true.
 
 # set to true to use GPUs
 GPU_MODE                        = .false.
-

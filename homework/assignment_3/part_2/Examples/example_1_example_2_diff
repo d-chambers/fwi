@@ -1,0 +1,130 @@
+8c8
+< title                           = Test of SPECFEM2D with curved interfaces
+---
+> title                           = Tape-Liu-Tromp (GJI 2007)
+24c24
+< NSTEP                           = 1600
+---
+> NSTEP                           = 5000
+27c27
+< DT                              = 1.1d-3
+---
+> DT                              = 6.0d-2
+55c55
+< setup_with_binary_database      = 0
+---
+> setup_with_binary_database      = 1
+84c84
+< ATTENUATION_f0_REFERENCE        = 5.196          # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise); relevant only if source is a Dirac or a Heaviside, otherwise it is automatically set to f0 the dominant frequency of the source in the DATA/SOURCE file
+---
+> ATTENUATION_f0_REFERENCE        = 5.196152422706633 # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise); relevant only if source is a Dirac or a Heaviside, otherwise it is automatically set to f0 the dominant frequency of the source in the DATA/SOURCE file
+151c151
+< NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 10000
+---
+> NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 1000
+161c161
+< USER_T0                         = 0.0d0
+---
+> USER_T0                         = 48.0d0
+165c165
+< save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+---
+> save_binary_seismograms_single  = .false.        # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+170c170
+< use_existing_STATIONS           = .true.
+---
+> use_existing_STATIONS           = .false.
+173c173
+< nreceiversets                   = 2
+---
+> nreceiversets                   = 1
+180,193c180,185
+< nrec                            = 11             # number of receivers
+< xdeb                            = 300.           # first receiver x in meters
+< zdeb                            = 2200.          # first receiver z in meters
+< xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
+< zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
+< record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+< 
+< # second receiver set
+< nrec                            = 11             # number of receivers
+< xdeb                            = 2500.          # first receiver x in meters
+< zdeb                            = 2500.          # first receiver z in meters
+< xfin                            = 2500.          # last receiver x in meters (ignored if only one receiver)
+< zfin                            = 0.             # last receiver z in meters (ignored if only one receiver)
+< record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+---
+> nrec                            = 1              # number of receivers
+> xdeb                            = 180081.41      # first receiver x in meters
+> zdeb                            = 388768.71      # first receiver z in meters
+> xfin                            = 450000.        # last receiver x in meters (ignored if only one receiver)
+> zfin                            = 10000.         # last receiver z in meters (ignored if only one receiver)
+> record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
+203c195
+< save_ASCII_kernels              = .true.
+---
+> save_ASCII_kernels              = .false.
+238c230
+< PERIODIC_HORIZ_DIST             = 4000.d0
+---
+> PERIODIC_HORIZ_DIST             = 0.3597d0
+247c239
+< nbmodels                        = 4
+---
+> nbmodels                        = 1
+263,266c255
+< 1 1 2700.d0 3000.d0 1800.d0 0 0 9999 9999 0 0 0 0 0 0
+< 2 1 2500.d0 2700.d0 0 0 0 9999 9999 0 0 0 0 0 0
+< 3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
+< 4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
+---
+> 1 -1 0 0 0.5 0 0 0 0 0 0 0 0 0 0  
+282,285c271,274
+< mesh_file                       = ./DATA/mesh_file          # file containing the mesh
+< nodes_coords_file               = ./DATA/nodes_coords_file  # file containing the nodes coordinates
+< materials_file                  = ./DATA/materials_file     # file containing the material number for each element
+< free_surface_file               = ./DATA/free_surface_file  # file containing the free surface
+---
+> mesh_file                       = ./DATA/ice_water_rock_1D/ice_water_rock_1D_elements   # file containing the mesh
+> nodes_coords_file               = ./DATA/ice_water_rock_1D/ice_water_rock_1D_nodes   # file containing the nodes coordinates
+> materials_file                  = ./DATA/ice_water_rock_1D/ice_water_rock_1D_material   # file containing the material number for each element
+> free_surface_file               = ./DATA/ice_water_rock_1D/ice_water_rock_1D_surface_free   # file containing the free surface
+287c276
+< absorbing_surface_file          = ./DATA/absorbing_surface_file   # file containing the absorbing surface
+---
+> absorbing_surface_file          = ./DATA/ice_water_rock_1D/ice_water_rock_1D_surface_absorb   # file containing the absorbing surface
+299c288
+< interfacesfile                  = interfaces.dat
+---
+> interfacesfile                  = interfaces_Tape2007.dat
+303,304c292,293
+< xmax                            = 4000.d0        # abscissa of right side of the model
+< nx                              = 80             # number of elements along X
+---
+> xmax                            = 480000.d0      # abscissa of right side of the model
+> nx                              = 40             # number of elements along X
+315,316c304
+< 1 80  1 80 1
+< 
+---
+> 1 40  1 40 1
+326c314
+< NTSTEP_BETWEEN_OUTPUT_INFO      = 100
+---
+> NTSTEP_BETWEEN_OUTPUT_INFO      = 400
+351c339
+< NTSTEP_BETWEEN_OUTPUT_IMAGES    = 100
+---
+> NTSTEP_BETWEEN_OUTPUT_IMAGES    = 200
+358c346
+< imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
+---
+> imagetype_JPEG                  = 3              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
+368c356
+< output_postscript_snapshot      = .false.         # output Postscript snapshot of the results every NTSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+---
+> output_postscript_snapshot      = .false.        # output Postscript snapshot of the results every NTSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+370c358
+< meshvect                        = .true.         # display mesh on PostScript plots or not
+---
+> meshvect                        = .false.        # display mesh on PostScript plots or not

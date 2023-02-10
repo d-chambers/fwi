@@ -1,11 +1,11 @@
-#-----------------------------------------------------------
+m#-----------------------------------------------------------
 #
 # Simulation input parameters
 #
 #-----------------------------------------------------------
 
 # title of job
-title                           = Simple Kernel
+title                           = Layered Model Basic
 
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
@@ -17,14 +17,14 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 1             # number of processes
+NPROC                           = 1              # number of processes
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 1800
+NSTEP                           = 1600
 
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-DT                              = 1.0d-3
+DT                              = 1.1d-3
 
 # time stepping
 # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
@@ -46,7 +46,7 @@ AXISYM                          = .false.
 PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
-NGNOD                           = 9
+NGNOD                           = 4
 
 # creates/reads a binary database that allows to skip all time consuming setup steps in initialization
 # 0 = does not read/create database
@@ -162,7 +162,7 @@ USER_T0                         = 0.0d0
 
 # seismogram formats
 save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
-save_binary_seismograms_single  = .false.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
 save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
 SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
@@ -260,9 +260,9 @@ nbmodels                        = 4
 #       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-1 1 2700.d0 3000.d0 1800.0d0 0 0 9999 9999 0 0 0 0 0 0
-2 1 2500.d0 2700.d0 0 0 0 9999 9999 0 0 0 0 0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
+1 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
+2 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
+3 1 2700.d0 3000.d0 1800.0d0 0 0 9999 9999 0 0 0 0 0 0
 4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
 
 # external tomography file
@@ -302,6 +302,7 @@ interfacesfile                  = interfaces.dat
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 4000.d0        # abscissa of right side of the model
 nx                              = 80             # number of elements along X
+                         = 80             # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -310,9 +311,11 @@ absorbtop                       = .true.
 absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
-nbregions                       = 1              # then set below the different regions and model number for each region
+nbregions                       = 3              # then set below the different regions and model number for each region
 # format of each line: nxmin nxmax nzmin nzmax material_number
-1 80  1 80 1
+1 80  1 20 1
+1 80 21 40 2
+1 80 41 60 3
 
 #-----------------------------------------------------------
 #
