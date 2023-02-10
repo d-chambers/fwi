@@ -104,8 +104,16 @@ def change_dir(new):
     os.chdir(current)
 
 
+def _create_outputs(cwd):
+    """Ensure the ouputs folder exists."""
+    path = Path(cwd) / "OUTPUT_FILES"
+    if not path.exists():
+        path.mkdir(exist_ok=True, parents=True)
+
+
 def _call_bin(cwd, name):
     cwd = Path(cwd or Path().cwd()).absolute()
+    _create_outputs(cwd)
     with change_dir(cwd):
         bin_path = BIN_PATH / name
         assert bin_path.exists()
