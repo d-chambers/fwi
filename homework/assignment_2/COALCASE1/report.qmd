@@ -149,7 +149,15 @@ model the minimum suggested sampling is met.
 
 # Results
 
-## Waveform plots
+## Waveforms
+
+Figures @fig-ztraces and @fig-xtraces show the synthetic seismograms plotted as 
+function of time and source-receiver distance. The P (first arrival) and S (second arrival)
+are both quite prominent. Later on there are also reflections and (potentially) surface waves.
+
+![Receiver Traces, Z component](OUTPUT_FILES/z_trace_plot.png){#fig-ztraces}
+![Receiver Traces, X component](OUTPUT_FILES/z_trace_plot.png){#fig-xtraces}
+
 
 
 
