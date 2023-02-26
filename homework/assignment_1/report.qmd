@@ -1,0 +1,194 @@
+---
+title: "GPGN 598A: Assignment #1"
+subtitle: Heat Equation Finite Differences
+date: 2023-01-22
+author:
+  - name: Derrick Chambers
+    url: https://derchambers.com
+    affiliation: Colorado School of Mines
+    affiliation-url: https://mines.edu
+
+format:
+  pdf:
+    # toc: true
+    # toc-depth: 1
+    number-sections: true
+    colorlinks: true
+header-includes:
+ \usepackage{wrapfig}
+ \usepackage{float}
+ \floatplacement{figure}{H}
+ \usepackage{amsmath}
+---
+
+# Heat Equation
+
+Heat equation.
+
+The 1D heat equation is given by:
+
+$$
+\rho(x) c_p(x) \partial_t T(x, t) = \partial_x[k(x) \partial_x T(x, t)]
+$${#eq-heat_1}
+
+And the thermal diffusivity $D ≡ k/(\rho c_p)$.
+
+
+Applying the chain rule:
+
+$$
+\rho(x) c_p(x) \partial_t T(x, t) = k(x) \partial_x^2 T(x, t) + \partial_x T(x, t) \partial_x k(x)
+$$
+
+Then simplifying:
+
+$$
+\partial_t T(x, t) = D(x)  \partial_x^2 T(x, t) + \frac{\partial_x T(x, t) \partial_x k(x)}{\rho(x) c_p(x)}
+$${#eq-heat-simplified}
+
+Where the second term on the RHS is zero when $k(x)$ does not vary with distance.
+
+# Problem 1: Heat Equation
+
+Using @eq-heat-simplified, letting $U_j^n = U(x, t) = U(x_0 + j\Delta x , t_0 + n \Delta t)$, this reduces to:
+
+
+$$
+T^{n+1}_{j} = T^n_j + D_j\frac{\Delta t}{\Delta x^2} \underbrace{(T^n_{j+1} - 2 T^n_j + T^{n}_{j-1})}_\textrm{A}
++ \frac{\Delta t}{4 \Delta x^2 \rho_j c_{p_j}}
+\underbrace{(T^n_{j+1} - T^n_{j-1})}_\textrm{B} \underbrace{(k_{j+1}^n - k_{j-1}^n)}_\textrm{C}
+$${#eq-ftcs}
+
+Where A, B, and C all operate on the same time step and can be efficiently implemented as 1D convolution operators.
+Also note, when k is constant the second term in the RHS vanishes.
+
+Running the simulation for the requested time steps (0.40, 0.45, 0.55, 0.6) $\frac{\Delta x^2}{D}$, and using an
+initial temperature pulse of 400k, results in the following:
+
+![Problem 1 Results](problem_1.png){#fig-explicit_results}
+
+Clearly, from the figure above, numerical instability is occuring the for cases when $\Delta t = 0.55 \frac{\Delta x^2}{D}$
+and $\Delta t = 0.6 \frac{\Delta x^2}{D}$.
+
+
+# Problem 2: Explicit versus Implicit Scheme
+
+Assuming only homogenous diffusivity, taking the central difference in space and the backward difference
+in time, and letting $C=D\frac{\Delta t}{\Delta x^2}$ @eq-heat-simplified reduces to:
+
+$$
+T^{n-1}_j = -C T^n_{j+1} + (2C + 1) T^n_j - C T^{n}_{j-1}
+$${#eq-btcs}
+
+
+which in matrix form is:
+
+$$
+\begin{bmatrix}
+2C + 1 & -C & 0 & 0 & 0 & 0 & 0\\
+-C & 2C+1 & -C & 0 & 0 & 0 & 0\\
+0 & -C & 2C+1 & -C & 0 & 0 & 0\\
+0 & 0 & ... & ... & ... & 0 & 0\\
+0 & 0 & 0 & 0 & -C & 2C+1 & -C\\
+0 & 0 & 0 & 0 & 0 & -C & 2C+1
+\end{bmatrix} \cdot \begin{bmatrix}
+T_1^n\\
+T_2^n\\
+T_3^n\\
+...\\
+T_{J-1}^n\\
+T_{J-2}^n
+\end{bmatrix} = \begin{bmatrix}
+1 & 0 & 0 & 0 & 0 & 0 & 0\\
+0 & 1 & 0 & 0 & 0 & 0 & 0\\
+0 & 0 & 1 & 0 & 0 & 0 & 0\\
+0 & 0 & ... & ... & ... & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & 1
+\end{bmatrix} \cdot \begin{bmatrix}
+T_1^{n-1}\\
+T_2^{n-1}\\
+T_3^{n-1}\\
+...\\
+T_{J-1}^{n-1}\\
+T_{J-2}^{n-1}
+\end{bmatrix}
+$${#eq-btcs_matrix}
+
+
+or
+
+$$
+\underline{T^n} = \underline{\underline{A}}^{-1}  \underline{T^{n-1}}
+$${#eq-btcs_matrix_eq}
+
+and since $\underline{\underline{A}}$ doesn't depend on time, and in this case space,
+its inverse can be calculated once and applied for each time step, making the process
+very efficient. However, in the non-homegenous case the matrix inversion may become
+more complicated.
+
+For the case in problem 1, this results in the following results:
+
+![Problem 2 Results](problem_2.png){#fig-implicit_results}
+
+The implicit scheme produced stable results regardless of the timestep, but for the stable cases
+in the explicit scheme @fig-explicit_results, the results are very similar to the implicit results.
+
+The explicit scheme from problem 1, however, is conditionally stable.
+
+
+
+# Problem 3: Crank-Nicolson Scheme
+
+The Crank-Nicolson Scheme is similar to the implicit scheme shown in the previous
+problem, excpet the spatial deriviates are taken by averaging the the current time and pervious time
+such that:
+
+$$
+-\frac{C}{2} T^n_{i-1} + [1 + C] T^n_i - \frac{C}{2} T^n_{i+1} =
+\frac{C}{2} T^{n-1}_{i-1} + [1 - C] T^{n-1}_i - \frac{C}{2} T^{n-1}_{i+1}
+$${#eq-cn_1}
+
+Which has the results in
+
+$$
+\underline{\underline{D}}^{ } \underline{T^n} = \underline{\underline{E}}^{ } \underline{T^{n-1}}
+$$
+
+where
+
+$$
+\underline{\underline{D}} = \begin{bmatrix}
+1 + C & -C/2 & 0 & 0 & 0 & 0 & 0\\
+-C/2 & 1 + C & -C/2 & 0 & 0 & 0 & 0\\
+0 & -C/2 & 1 + C & -C/2 & 0 & 0 & 0\\
+0 & 0 & ... & ... & ... & 0 & 0\\
+0 & 0 & 0 & 0 & -C/2 & 1 + C & -C/2\\
+0 & 0 & 0 & 0 & 0 & -C/2 & 1 + C
+\end{bmatrix}
+$$
+
+
+and
+
+$$
+\underline{\underline{E}} = \begin{bmatrix}
+1 - C & C/2 & 0 & 0 & 0 & 0 & 0\\
+C/2 & 1 - C & C/2 & 0 & 0 & 0 & 0\\
+0 & C/2 & 1 - C & C/2 & 0 & 0 & 0\\
+0 & 0 & ... & ... & ... & 0 & 0\\
+0 & 0 & 0 & 0 & C/2 & 1 - C & C/2\\
+0 & 0 & 0 & 0 & 0 & C/2 & 1 - C
+\end{bmatrix}
+$$
+
+Solving for $\underline{T^n}$ we obtain:
+
+$$
+\underline{T^n} = \underline{\underline{D}}^{-1} \underline{\underline{E}}^{ } \underline{T^{n-1}}
+$${#eq-cn_solution}
+
+Which results in very similar results to the implicit solution from Problem 2 except with lower
+numerical error.
+
+![Problem 3 Results](problem_3.png){#fig-cn_results}

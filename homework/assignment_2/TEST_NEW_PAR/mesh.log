@@ -1,0 +1,160 @@
+
+ **********************************************
+ *** Specfem 2-D Mesher - MPI version       ***
+ **********************************************
+
+ Running Git version of the code corresponding to fd7926e7eae5f9c0f614cf7d06e56c768ca3a9a4
+ dating 2022-12-13 20:03:51 +0100
+
+ Reading the parameter file...
+
+ Title of the simulation: simple kernel
+
+
+ Receiver lines:
+   Nb of line sets =            1
+
+ Materials:
+   Nb of solid, fluid or porous materials =            4
+
+ --------
+ Material #           1  isotropic
+ rho,cp,cs   =    2700.0000000000000        3000.0000000000000        1800.0000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
+ Material is solid
+ --------
+ Material #           2  isotropic
+ rho,cp,cs   =    2500.0000000000000        2700.0000000000000        0.0000000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
+ Material is fluid
+ --------
+ Material #           3  isotropic
+ rho,cp,cs   =    2200.0000000000000        2500.0000000000000        1443.3750000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
+ Material is solid
+ --------
+ Material #           4  isotropic
+ rho,cp,cs   =    2200.0000000000000        2200.0000000000000        1343.3750000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
+ Material is solid
+ --------
+
+
+ Mesh from internal meshing:
+
+ Reading interface data from file: ./DATA/interfaces.dat
+ Reading            2  points for interface            1
+ Reading            2  points for interface            2
+
+ Total number of layers in z direction =            1
+ There are           80  spectral elements along Z in layer            1
+
+ Total number of spectral elements along X =           80
+ Total number of spectral elements along Z =           80
+
+ Regions:
+   Nb of regions in the mesh =            1
+
+ ------
+ Region            1
+ IX from            1  to           80
+ IZ from            1  to           80
+ Material #            1  isotropic
+ Material is solid
+ vp     =    3000.00000
+ vs     =    1800.00000
+ rho    =    2700.00000
+ Poisson's ratio =   0.218750000
+ QKappa =    9999.00000
+ Qmu    =    9999.00000
+ ------
+
+ Parameter file successfully read
+
+
+ Mesh from internal meshing:
+   Total number of spectral elements         =         6400
+
+ PML mesh elements:
+   Total number of PML elements =            0
+
+ The mesh contains         6400  elements
+
+ Control elements have            4  nodes
+
+ Reading in SOURCE file...
+
+ Source           1
+   Position xs, zs =    1000.0000000000000        2000.0000000000000
+
+   Source type (1=force, 2=moment tensor):            1
+   Force source:
+   Angle of the source (deg) =    0.0000000000000000
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 6,7=ocean type, 8=Read from file, 9=burst, 10=Sinusoidal, 11=Ormsby):           1
+   Ricker wavelet (second-derivative):
+   Frequency, delay =    10.000000000000000        0.0000000000000000
+   Multiplying factor  =    10000000000.000000
+
+ all sources are okay
+
+ Normals to surface not needed
+
+ Node coordinates:
+
+ reading node coordinates from interfaces...
+
+ Mesh surfaces:
+   determining acoustic free surface...
+   number of acoustic elements with free surface =            0
+
+   determining absorbing boundary surfaces...
+   number of elements with absorbing boundaries =          320
+
+
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        4000.0000000000000
+   Min and max value of Z in the grid =    0.0000000000000000        4000.0000000000000
+
+ Mesh partitioning:
+   decomposing mesh using NPROC =            1
+
+ Graph construction:
+   graph adjacency done
+
+ Coupled interfaces:
+ nedges_coupled (acoustic/elastic)     =            0
+ nedges_coupled (acoustic/poroelastic) =            0
+ nedges_coupled (poroelastic/elastic)  =            0
+
+ Local numbering:
+   NPROC:            1
+   number of elements:         6400
+
+ decompose mesh all done
+
+ Absorbing boundaries:
+   nedge_bound   :          320
+   nelemabs_merge:          320
+
+ Saving databases:
+   database file: ./OUTPUT_FILES/Database00000.bin
+   slice            0  has number of spectral elements =        6400
+
+   VTK mesh files:
+   written file: ./OUTPUT_FILES//mesh_materials.vtk
+   written file: ./OUTPUT_FILES//mesh_partition_number.vtk
+   done
+
+ creating STATIONS file...
+
+ writing the ./DATA/STATIONS file
+
+
+ There are            1  receivers
+
+ Target positions (x,z) of the            1  receivers
+
+ Receiver            1  =    180081.41000000000        388768.71000000002
+
+ This will be a serial simulation

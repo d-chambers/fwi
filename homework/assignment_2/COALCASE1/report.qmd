@@ -1,0 +1,161 @@
+---
+title: "GPGN 598A: Assignment #2"
+subtitle: Forward Modeling with SpecFEM2D
+bibliography: references.bib
+date: 2023-02-25
+author:
+  - name: Derrick Chambers
+    url: https://derchambers.com
+    affiliation: Colorado School of Mines
+    affiliation-url: https://mines.edu
+
+format:
+  pdf:
+    # toc: true
+    # toc-depth: 1
+    number-sections: true
+    colorlinks: true
+header-includes:
+ \usepackage{wrapfig}
+ \usepackage{float}
+ \floatplacement{figure}{H}
+ \usepackage{amsmath}
+---
+
+# Prompt
+
+Please upload a brief report based on your "forward simulations" with SPECFEM2D as a result of the practicals
+you did with Andrea during the last two weeks.
+
+In your report, please make sure that you address the following:
+
+1- figures of your model, source-receiver configuration and the computed seismograms,
+
+2- the parameter file you used during your simulations,
+
+3- the resolution of your simulations (i.e., minim resolvable period by your mesh),
+
+4- what kind of seismic source you use,
+
+5- are you using the numerical solver in the SH or P-SV mode.
+
+6- what phases you observe on your seismograms.
+
+7- the corner frequencies of your band-pass or low-pass filter.
+
+8- your interpretation and comments.
+
+# Model Development
+
+I developed the following model based on the default example included in
+the Specfem2D repository. However, I modified the model geometry, grid size, 
+source parameters, and material properties to gain an understanding of the 
+various input options. @fig-model shows the main components of the model
+which the following sections describe in more detail.
+
+![Material Model. Yellow triangles represent receivers and the two red arrows 
+represent the force couple used as a source.](model.png){#fig-model width=300}
+ 
+
+## Material Properties
+
+The 2D model is composed of three elastic materials which have the following properties: (@tbl-materials) 
+
+| Material  | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
+|:---------:|:-----------------------:|:-------------------:|:-------------------:|
+|     1     |          2,700          |        3,000        |        1,800        |
+|     2     |          2,500          |        2,700        |        1,500        |
+|     3     |          2,200          |        2,500        |        1,400        |
+
+: Materials {#tbl-materials}
+
+Material attenuation was disabled.
+
+## Geometry and Grid Discretization
+
+The model is a basic layered-cake model with flat interfaces between boundaries
+with hypothetical topography applied in the last layer. 
+
+The Total model extents are 4000m in the x direction and the Z extents
+range from $\approx$ 3000m to 3350m depending on the topography. The total number
+of elements in the x direction in 100 and in the z direction is 75. This means
+each element is approximately 40m by 40m. 
+
+## Boundary Conditions
+
+Perfectly Matched Layers (PML) boundary conditions with 3 element thickness on all
+sides. The default attenuation parameters were left unchanged.
+
+## Source
+
+An elastic force angled 30 degrees counter-clockwise was used as the seismic source.
+The source was located at x=2000m and z=1500m. A Ricker (2nd derivative of Gaussian)
+source-time function was selected with a dominant frequency of 8Hz. This gives an
+approximate maximum source frequency of 20Hz.
+
+## Receivers
+
+Eleven evenly spaced receivers were located on the surface, starting at x=300m
+and ending at x=2700m (@fig-model).
+
+# Simulation Parameters
+
+There were 25 nodes per element, corresponding to approximately 5 in each
+direction. However, since GLLs are not evenly spaced, the average spacing
+(as reported by SpecFEM2D) is  9.98m and the minimum spacing is 6.89m. 
+
+## Time
+
+Courant–Friedrichs–Lewy Stability Condition [CFL, @de2013courant] requires the
+physical velocity is bounded by the model, or numerical, velocity. More formally,
+it requires the following condition is met:
+
+$$
+C \frac{\Delta t}{\Delta x} \le 1
+$${#eq-clf}
+
+Where C is the velocity (m/s), $\Delta x$ is the model spacing and $\Delta t$
+is the model time step. 
+
+For this simulation, a reasonable time-step of 1.0e-3 seconds was selected
+then the CFL stability assessed.
+
+For spectral elements calculating @eq-clf correctly depends on more than just
+the element size but also time stepping algorithm, boundary conditions, and several
+other factors (see the SpecFEM2D manual: How to choose the time step).
+
+However, to approximate CLF limit of this model, we can use the minimum GLL spacing,
+the maximum model velocity, and the specified time step.
+
+$$
+CLF_{approx} \approx C_{max}  \frac{1.0e-3 s}{6.89 m} \approx  3000 (m/s) \frac{1.0e-3}{6.89m} 
+\approx 0.44
+$$
+
+Which is close to the reported value of 0.43. Since the reported value is
+less than the recommended max (0.5) there shouldn't be any stability issues 
+related to the CFL condition.
+
+## Wave Sampling
+
+Another important simulation consideration is wavelength resolution. SpecFEM2D
+recommends an average number of GLLs per wavelength of 4.5 for S waves and
+5.5 for P waves. This constraint is, of course, governed by the mesh spacing
+and the lowest material velocity. 
+
+The output file (included with this report) indicate for all regions of the
+model the minimum suggested sampling is met.
+
+
+# Results
+
+## Waveform plots
+
+
+
+
+
+
+
+# References
+
