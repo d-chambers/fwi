@@ -22,12 +22,13 @@ header-includes:
  \usepackage{amsmath}
 ---
 
-# Prompt
+# Abstract
 
-Please upload a brief report based on your "forward simulations" with SPECFEM2D as a result of the practicals
-you did with Andrea during the last two weeks.
+The purpose of this assignment is to demonstrate use of SpecFEM2D for forward modeling.
+Several examples were provided but students were encouraged to deviate 
+from the fixed cases and create their own examples.
 
-In your report, please make sure that you address the following:
+Specifically, the assigment asks for the following:
 
 1- figures of your model, source-receiver configuration and the computed seismograms,
 
@@ -45,15 +46,18 @@ In your report, please make sure that you address the following:
 
 8- your interpretation and comments.
 
+The remaining sections of this document described a unique model developed
+by the author and address requested points.
+
 # Model Development
 
 I developed the following model based on the default example included in
-the Specfem2D repository. However, I modified the model geometry, grid size, 
+the SpecFEM2D repository. However, I modified the model geometry, grid size, 
 source parameters, and material properties to gain an understanding of the 
-various input options. @fig-model shows the main components of the model
-which the following sections describe in more detail.
+various input options. @fig-model shows the model, source geometry, and receiver
+geometry which the following sections describe in more detail.
 
-![Material Model. Yellow triangles represent receivers and the two red arrows 
+![Simulation Geometry. Yellow triangles represent receivers and the two red arrows 
 represent the force couple used as a source.](model.png){#fig-model width=300}
  
 
@@ -74,7 +78,7 @@ Material attenuation was disabled.
 ## Geometry and Grid Discretization
 
 The model is a basic layered-cake model with flat interfaces between boundaries
-with hypothetical topography applied in the last layer. 
+with hypothetical topography applied in the most shallow layer. 
 
 The Total model extents are 4000m in the x direction and the Z extents
 range from $\approx$ 3000m to 3350m depending on the topography. The total number
@@ -84,27 +88,33 @@ each element is approximately 40m by 40m.
 ## Boundary Conditions
 
 Perfectly Matched Layers (PML) boundary conditions with 3 element thickness on all
-sides. The default attenuation parameters were left unchanged.
+sides. The default attenuation parameters were left unchanged from the default
+parameters file.
 
 ## Source
 
 An elastic force angled 30 degrees counter-clockwise was used as the seismic source.
 The source was located at x=2000m and z=1500m. A Ricker (2nd derivative of Gaussian)
 source-time function was selected with a dominant frequency of 8Hz. This gives an
-approximate maximum source frequency of 20Hz.
+approximate maximum source frequency of 20Hz, which is the maximum recommended 
+frequency suggested by the SpecFEM2D output.
 
 ## Receivers
 
 Eleven evenly spaced receivers were located on the surface, starting at x=300m
-and ending at x=2700m (@fig-model).
+and ending at x=2700m (@fig-model). Their Z coordinate varies depending on the
+topography.
 
 # Simulation Parameters
 
 There were 25 nodes per element, corresponding to approximately 5 in each
 direction. However, since GLLs are not evenly spaced, the average spacing
-(as reported by SpecFEM2D) is  9.98m and the minimum spacing is 6.89m. 
+(as reported by SpecFEM2D) is 9.98m and the minimum spacing is 6.89m. 
 
-## Time
+The simulation is run in P-SV mode rather than SH/membrane wave mode. It is 
+Cartesian Planar simulation. 
+
+## CFL Stability
 
 Courant–Friedrichs–Lewy Stability Condition [CFL, @de2013courant] requires the
 physical velocity is bounded by the model, or numerical, velocity. More formally,
@@ -120,49 +130,69 @@ is the model time step.
 For this simulation, a reasonable time-step of 1.0e-3 seconds was selected
 then the CFL stability assessed.
 
-For spectral elements calculating @eq-clf correctly depends on more than just
-the element size but also time stepping algorithm, boundary conditions, and several
-other factors (see the SpecFEM2D manual: How to choose the time step).
+For spectral elements, calculating @eq-clf correctly depends on more than just
+the element size. The time stepping algorithm, boundary conditions, and several
+other factors must also be considered (see the SpecFEM2D manual: How to choose the time step).
 
-However, to approximate CLF limit of this model, we can use the minimum GLL spacing,
-the maximum model velocity, and the specified time step.
+However, to approximate CLF limit in a less precise way, the minimum GLL spacing,
+the maximum model velocity, and the specified time step can be used.
 
 $$
 CLF_{approx} \approx C_{max}  \frac{1.0e-3 s}{6.89 m} \approx  3000 (m/s) \frac{1.0e-3}{6.89m} 
 \approx 0.44
 $$
 
-Which is close to the reported value of 0.43. Since the reported value is
+Which is close the value reported by the SpecFEM2D output of 0.43. Since the reported value is
 less than the recommended max (0.5) there shouldn't be any stability issues 
 related to the CFL condition.
 
-## Wave Sampling
+## Wavelength Resolution
 
 Another important simulation consideration is wavelength resolution. SpecFEM2D
 recommends an average number of GLLs per wavelength of 4.5 for S waves and
 5.5 for P waves. This constraint is, of course, governed by the mesh spacing
 and the lowest material velocity. 
 
-The output file (included with this report) indicate for all regions of the
-model the minimum suggested sampling is met.
+The distribution of GLLs per S-wavelength is shown in @fig-GLL-histogram. IN all
+cases, the minimum of 4.5 is exceeded.
+
+![GLL Histogram](OUTPUT_FILES/GLL_histogram.png){#fig-GLL-histogram}
 
 
 # Results
 
-## Waveforms
+Figures @fig-xtraces and @fig-ztraces show the synthetic seismograms plotted as 
+function of time and source-receiver distance. The seismograms calculated by
+SpecFEM2D were first filtered before displaying to remove frequencies outside the
+resolvable range of the model. A simple Butterworth bandpass filter was used with 
+minium frequency of 0.05Hz and a maximum of 20Hz as implemented in ObsPy 
+[@krischer2015obspy]. These frequencies were indicated
+as the minimum and maximum resolvable frequencies by the SpecFEM2D output.
 
-Figures @fig-ztraces and @fig-xtraces show the synthetic seismograms plotted as 
-function of time and source-receiver distance. The P (first arrival) and S (second arrival)
-are both quite prominent. Later on there are also reflections and (potentially) surface waves.
+The P (first arrival) and S (second arrival) are both quite prominent.Later on there
+are also weaker phases which are discussed later on.
 
-![Receiver Traces, Z component](OUTPUT_FILES/z_trace_plot.png){#fig-ztraces}
-![Receiver Traces, X component](OUTPUT_FILES/z_trace_plot.png){#fig-xtraces}
+![Receiver Traces, X Component](OUTPUT_FILES/x_trace_plot.png){#fig-xtraces}
 
-
+![Receiver Traces, Z Component](OUTPUT_FILES/z_trace_plot.png){#fig-ztraces}
 
 
 
+# Discussion
 
+Because potential stability and resolution issues were addressed, the simulation  
+worked without major issues. The produced seismograms are reasonable, and a clear
+P-S separation is observable which, as expected, increases with source-receiver
+distance. It is more difficult, however, to interpret the other features in the
+seismogram, which could correspond to reflections, refractions, and, 
+perhaps, the beginning of Rayleigh wave formation (although typically larger
+source-receiver distance is required for surface waves to form).
+
+# Supplemental Materials
+
+The input files for this simulation, as well as jpeg images showing progression
+of the simulation at various points in time, are attached as supplemental
+material in the assignment submission.
 
 
 # References
