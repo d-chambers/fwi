@@ -13,15 +13,13 @@ from os.path import exists
 
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib import ticker, cm
 import numpy as np
 import pylab
 import scipy.interpolate
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-import matplotlib.pyplot as plt
+from matplotlib import cm, ticker
 from matplotlib.collections import PathCollection
 from matplotlib.path import Path
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def hex_to_rgb(value):

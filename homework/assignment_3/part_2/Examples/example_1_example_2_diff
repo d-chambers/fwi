@@ -45,7 +45,7 @@
 < xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
 < zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
 < record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
-< 
+<
 < # second receiver set
 < nrec                            = 11             # number of receivers
 < xdeb                            = 2500.          # first receiver x in meters
@@ -78,7 +78,7 @@
 < 3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
 < 4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
 ---
-> 1 -1 0 0 0.5 0 0 0 0 0 0 0 0 0 0  
+> 1 -1 0 0 0.5 0 0 0 0 0 0 0 0 0 0
 282,285c271,274
 < mesh_file                       = ./DATA/mesh_file          # file containing the mesh
 < nodes_coords_file               = ./DATA/nodes_coords_file  # file containing the nodes coordinates
@@ -105,7 +105,7 @@
 > nx                              = 40             # number of elements along X
 315,316c304
 < 1 80  1 80 1
-< 
+<
 ---
 > 1 40  1 40 1
 326c314

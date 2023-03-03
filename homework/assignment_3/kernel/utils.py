@@ -1,24 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Apr 25 10:09:05 2022
 
 @author: andreacamilarianoescandon using plot file seisflows-legacy
 """
-
-# !/usr/bin/env python
-
-import os
 import re
-import glob
-import shutil
-import obspy
-import numpy as np
-import IPython.display as dp
-import matplotlib.pyplot as plt
 
-from scipy.integrate import simps
-from PIL import Image
+import numpy as np
+import obspy
 
 
 # Some utility functions (written by Ridvan Orsvuran)
@@ -69,6 +57,7 @@ def specfem_write_parameters(filename, parameters, output_file=None):
 
 
 def specfem2D_prep_save_forward(filename=None):
+    """Prepare parfile for forward simulation"""
     if filename is None:
         filename = "./DATA/Par_file"
     params = {
@@ -81,6 +70,7 @@ def specfem2D_prep_save_forward(filename=None):
 
 
 def specfem2D_prep_adjoint(filename=None):
+    """Prepare datafile for adjoint."""
     if filename is None:
         filename = "./DATA/Par_file"
     params = {"SIMULATION_TYPE": 3, "SAVE_FORWARD": ".false."}
@@ -106,8 +96,8 @@ def grid(x, y, z, resX=100, resY=100):
     return X, Y, Z
 
 
-# AR: function to replace line in text file ------------------------------------
 def replace_line(file_name, line_num, text):
+    """AR: function to replace line in text file"""
     lines = open(file_name, "r").readlines()
     lines[line_num] = text
     out = open(file_name, "w")
