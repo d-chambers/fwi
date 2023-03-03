@@ -16,7 +16,7 @@ def plot_simulations(results, axes, fig, cols_to_plot, max_y=40):
     """
     for ax, col in zip(axes, cols_to_plot):
         ser = results[col]
-        ax.plot(ser.index, ser)
+        ax.plot_single(ser.index, ser)
         ax.ticklabel_format(axis="Y", scilimits=(0, 1))
         ax.set_ylim(0, max([max_y, ser.max()]))
 

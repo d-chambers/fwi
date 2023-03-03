@@ -10,7 +10,7 @@ title                           = Test of SPECFEM2D with curved interfaces
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
 # note: 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
-SIMULATION_TYPE                 = 3
+SIMULATION_TYPE                 = 1
 # 0 = regular wave propagation simulation, 1/2/3 = noise simulation
 NOISE_TOMOGRAPHY                = 0
 # save the last frame, needed for adjoint simulation
@@ -46,7 +46,7 @@ AXISYM                          = .false.
 PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
-NGNOD                           = 9
+NGNOD                           = 4
 
 # creates/reads a binary database that allows to skip all time consuming setup steps in initialization
 # 0 = does not read/create database
@@ -66,7 +66,7 @@ MODEL                           = default
 
 # Output the model with the requested type, does not save if turn to default or .false.
 # (available output formats: ascii,binary,gll,legacy)
-SAVE_MODEL                      = binary
+SAVE_MODEL                      = default
 
 
 #-----------------------------------------------------------
@@ -260,7 +260,7 @@ nbmodels                        = 4
 #       Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
 #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
 #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
-1 1 2700.d0 3000.d0 1800.d0 0 0 9999 9999 0 0 0 0 0 0
+1 1 2670.d0 3000.d0 1800.d0 0 0 9999 9999 0 0 0 0 0 0 
 2 1 2500.d0 2700.d0 0 0 0 9999 9999 0 0 0 0 0 0
 3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
 4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0

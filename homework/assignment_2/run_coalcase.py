@@ -42,7 +42,7 @@ def make_waveform_plot(st, event_location=(2000, 1500), amplification=120):
         for tr in traces:
             distance = get_distance(tr)
             data = (tr.data / max_amp) * amplification
-            ax.plot(data + distance, color=color)
+            ax.plot_single(data + distance, color=color)
         ax.set_xlabel("Time (s)")
         ax.set_ylabel("Source Receiver Distance (m)")
         return fig, ax

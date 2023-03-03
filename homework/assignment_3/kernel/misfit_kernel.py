@@ -14,6 +14,7 @@ import fwi_plot
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import obspy
 from pydantic import Field
 from pydantic.dataclasses import dataclass
@@ -222,7 +223,6 @@ class MisFit:
     def plot(self, trace_index=0):
         """Create a plot of observed/synthetic."""
         # tr1, tr2 = self.st1[trace_index], self.st2[trace_index]
-        # breakpoint()
 
         # fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, figsize=(20, 8))
         # ax1.plot(obsd.times() + obsd.stats.b, obsd.data, "b", label="obsd")
@@ -237,6 +237,57 @@ class MisFit:
         # ax2.legend(frameon=False)
         # ax2.set_xlabel("Time (s)")
         # ax.tick_params(axis="both", which="major", labelsize=14)
+
+
+class KernelKeeper:
+    """A simple class for managing kernels."""
+
+    def __init__(self, output_directory):
+        self.kernel_files = list(Path(output_directory).rglob('*kernel.dat'))
+        # find rho alpha beta and load it
+        out = [x for x in self.kernel_files if 'rhop_alpha_beta' in x.name]
+        assert len(out) == 1, "only one such kernel should exist."
+        self.rho_alpha_beta = self.load_kernel_file(out[0])
+
+    def load_kernel_file(self, file_path):
+        """Load a particular kernel file into a dataframe."""
+        names = ['x', 'z'] + list(file_path.name.split('_')[1:-1])
+        df = pd.read_csv(file_path, delim_whitespace=True, names=names, header=None)
+        return df
+
+    def plot(self, columns=('rho_p', 'alpha', 'beta')):
+        """
+        Plot several kernels.
+        """
+
+    def plot_single(self, column, ax=None, scale=0.15):
+        """Plot Rho, Alpha, Beta"""
+        df = self.rho_alpha_beta
+        data = self.rho_alpha_beta[column]
+        abs_max_val = np.abs(data).max()
+        min_val, max_val = -abs_max_val * scale, abs_max_val * scale
+
+        # extract/format data
+        x_vals, z_vals, data = grid(df['x'], df['z'], df[column])
+        extent = [df['x'].min(), df['x'].max(), df['z'].min(), df['z'].max()]
+
+        # Setup figure
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(8, 8))
+
+        # plot, set labels etc.
+        im = ax.imshow(data, extent=extent, cmap="seismic_r", vmin=min_val, vmax=max_val)
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Z (m)")
+        ax.set_title(f"{column.title()} Kernel")
+
+        # Plot source and station
+        ax.scatter(1000, 2000, 1000, marker="*", color="black", edgecolor="white")
+        ax.scatter(3000, 2000, 450, marker="v", color="black", edgecolor="white")
+
+        plt.colorbar(im, ax=ax)
+        ax.tick_params(axis='both', which='major', labelsize=14)
+        return ax
 
 
 def refresh_directory(dir_path: Path, make_new=True):
@@ -256,20 +307,20 @@ if __name__ == "__main__":
         template_path=Path(os.getcwd()) / "Examples" / "DATA_Example01",
     )
     # refresh the simulation
-    # ws.refresh()
+    ws.refresh()
 
     # --- Run True model
 
     # # perturb velocity
-    new_line = "1 1 2700.d0 3000.d0 1800.d0 0 0 9999 9999 0 0 0 0 0 0 \n"
+    new_line = "1 1 2700.d0 3000.d0 1820.d0 0 0 9999 9999 0 0 0 0 0 0 \n"
     ws.replace_par_line(262, new_line)
-    ws.run_forward(output_name="OUTPUT_FILES_TRUE")
+    # ws.run_forward(output_name="OUTPUT_FILES_TRUE")
     #
     # # --- Run forward initial model
     # # reset velocity
-    new_line = "1 1 2700.d0 3000.d0 1800.d0 0 0 9999 9999 0 0 0 0 0 0 \n"
+    new_line = "1 1 2670.d0 3000.d0 1800.d0 0 0 9999 9999 0 0 0 0 0 0 \n"
     ws.replace_par_line(262, new_line)
-    ws.run_forward(output_name="OUTPUT_FILES_INITIAL")
+    # ws.run_forward(output_name="OUTPUT_FILES_INITIAL")
 
     # --- Run waveform adjoint
     # get misfit
@@ -280,5 +331,9 @@ if __name__ == "__main__":
     # misfit_wf.calc_misfit()
     # adj = misfit_wf.calc_misfit()
     # Run adjoint
-    # breakpoint()
-    out = ws.run_adjoint(misfit_wf, "OUTPUT_FILES_ADJ_WF")
+    # out = ws.run_adjoint(misfit_wf, "OUTPUT_FILES_ADJ_WF")
+
+    # --- plot kernel
+    keeper = KernelKeeper(ws.work_path / "OUTPUT_FILES_ADJ_WF")
+    keeper.plot_single("rhop")
+    breakpoint()
