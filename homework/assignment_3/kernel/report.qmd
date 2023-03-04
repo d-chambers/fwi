@@ -1,0 +1,202 @@
+---
+title: "GPGN 598A: Assignment #3"
+subtitle: Calculating Adjoint Kernels
+bibliography: references.bib
+date: 2023-03-04
+author:
+  - name: Derrick Chambers
+    url: https://derchambers.com
+    affiliation: Colorado School of Mines
+    affiliation-url: https://mines.edu
+
+format:
+  pdf:
+    # toc: true
+    # toc-depth: 1
+    number-sections: true
+    colorlinks: true
+header-includes:
+ \usepackage{wrapfig}
+ \usepackage{float}
+ \floatplacement{figure}{H}
+ \usepackage{amsmath}
+---
+
+# Abstract
+
+The purpose of this assignment is to use SpecFEM2D to calculate kernels
+for three misfit functions:
+
+a) the cross-correlation traveltime misfit,
+
+b) the cross-correlation amplitude misfit,
+
+c) the waveform misfit.
+
+In addition, the report should address the following:
+
+1- figures of your model, source-receiver configuration, computed seismograms, adjoint sources and adjoint kernels,
+
+2- the parameter file you used during your simulations,
+
+3- the resolution of your simulations (i.e., min resolvable period by your mesh),
+
+4- the corner frequencies of your band-pass or low-pass filter.
+
+5- what kind of seismic source you use,
+
+6- are you using the numerical solver in the SH or P-SV mode,
+
+7- your interpretation and comments.
+
+# True Model Development
+
+In order to understand the kernels in the simplest cases, a 2D homogenous model
+was selected with a single source and a single receiver. The model extents are from
+0m to 4,000m in both dimensions and the elements are 50m by 50m. There are 9 points
+in each direction. 
+
+The source is located at x=1000, and z=2000 and the station is located at x=3000 and z=2000.
+
+
+
+![Model and Source Receiver Geometry](outputs/a010_model_geometry.png){#fig-model width=300}
+
+
+## Material Properties
+
+The 2D model is composed of one elastic material which has the following properties: (@tbl-materials)
+
+| Material  | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
+|:---------:|:-----------------------:|:-------------------:|:-------------------:|
+|     1     |          2,700          |        3,000        |        1,820        |
+
+: Materials {#tbl-materials}
+
+Material attenuation was disabled.
+
+## Geometry and Grid Discretization
+
+The model is a basic layered-cake model with flat interfaces between boundaries
+with hypothetical topography applied in the most shallow layer.
+
+The Total model extents are 4000m in the x direction and the Z extents
+range from $\approx$ 3000m to 3350m depending on the topography. The total number
+of elements in the x direction in 100 and in the z direction is 75. This means
+each element is approximately 40m by 40m.
+
+## Boundary Conditions
+
+Perfectly Matched Layers (PML) boundary conditions with 3 element thickness on all
+sides. The default attenuation parameters were left unchanged from the default
+parameters file.
+
+## Source
+
+An elastic force angled 0 degrees was used as the seismic source.
+The source was located at x=1000m and z=2000m. A Ricker (2nd derivative of Gaussian)
+source-time function was selected with a dominant frequency of 10Hz. This gives an
+approximate maximum source frequency of 25Hz, which is the maximum recommended
+frequency suggested by the SpecFEM2D output.
+
+## Receivers
+
+Eleven evenly spaced receivers were located on the surface, starting at x=300m
+and ending at x=2700m (@fig-model). Their Z coordinate varies depending on the
+topography.
+
+# Simulation Parameters
+
+There were 25 nodes per element, corresponding to approximately 5 in each
+direction. However, since GLLs are not evenly spaced, the average spacing
+(as reported by SpecFEM2D) is 9.98m and the minimum spacing is 6.89m.
+
+The simulation is run in P-SV mode rather than SH/membrane wave mode. It is
+Cartesian Planar simulation.
+
+## CFL Stability
+
+The reported max CFL stability condition for this simulation is 0.38 which is less
+than the maximum recommended value of 0.5 so there shouldn't be any stability issues
+related to the CFL condition in this model.
+
+## Wavelength Resolution
+
+Another important simulation consideration is wavelength resolution. SpecFEM2D
+recommends an average number of GLLs per wavelength of 4.5 for S waves and
+5.5 for P waves. This constraint is, of course, governed by the mesh spacing
+and the lowest material velocity.
+
+The number of GLLs per s-wave is 5.83. There is no distribution since all elements
+are the same size. This is greater than the minimum recommended value of 4.5 (for S waves)
+or 5.5 (for P waves), so there shouldn't be any resolution issues related to wavelength
+sampling.
+
+
+## Bandwidth
+
+The minimum and maximum frequencies removable by the model are 0.03 Hz and 29 Hz,
+respectively. These frequencies will be used to bandpass seismograms as part of the
+pre-processing step.
+
+
+# Initial model
+
+The initial model is the base model with density, p wave velocity, and s wave velocity
+all decreased by 50. 
+
+| Material | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
+|:--------:|:-----------------------:|:-------------------:|:-------------------:|
+|    1'    |          6,650          |        2,950        |        1,770        |
+
+
+# Kernel Procedure
+
+To obtain the sensitivity kernels, the following procedure is employed:
+
+1. Run forward simulation with the true model and store associated seismograms
+2. Run forward simulation with the initial model and store associated seismograms/last frame of the wavefield
+3. Calculate misfit between waveforms produced by the true and initial models and associated adjoint sources
+4. Run adjoint simulation and visualize the associated kernels
+
+
+# 
+
+
+# Results
+
+Figures @fig-xtraces and @fig-ztraces show the synthetic seismograms plotted as
+function of time and source-receiver distance. The seismograms calculated by
+SpecFEM2D were first filtered before displaying to remove frequencies outside the
+resolvable range of the model. A simple Butterworth bandpass filter was used with
+minium frequency of 0.05Hz and a maximum of 20Hz as implemented in ObsPy
+[@krischer2015obspy]. These frequencies were indicated
+as the minimum and maximum resolvable frequencies by the SpecFEM2D output.
+
+The P (first arrival) and S (second arrival) are both quite prominent.Later on there
+are also weaker phases which are discussed later on.
+
+![Receiver Traces, X Component](OUTPUT_FILES/x_trace_plot.png){#fig-xtraces}
+
+![Receiver Traces, Z Component](OUTPUT_FILES/z_trace_plot.png){#fig-ztraces}
+
+
+
+# Discussion
+
+Because potential stability and resolution issues were addressed, the simulation
+worked without major issues. The produced seismograms are reasonable, and a clear
+P-S separation is observable which, as expected, increases with source-receiver
+distance. It is more difficult, however, to interpret the other features in the
+seismogram, which could correspond to reflections, refractions, and,
+perhaps, the beginning of Rayleigh wave formation (although typically larger
+source-receiver distance is required for surface waves to form).
+
+# Supplemental Materials
+
+The input files for this simulation, as well as jpeg images showing progression
+of the simulation at various points in time, are attached as supplemental
+material in the assignment submission.
+
+
+# References

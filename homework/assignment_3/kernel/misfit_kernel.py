@@ -141,104 +141,6 @@ class Workspace:
                 shutil.copytree(path, new_path)
 
 
-class MisFit:
-    """
-    Container class to calculate misfits and adjoint sources.
-
-    Parameters
-    ----------
-    observed_path
-        The directory containing the observed data.
-    synthetic_path
-        The directory containing the synthetic data.
-    """
-
-    def __init__(self, observed_path, synthetic_path):
-        """Read in the streams for each directory."""
-        self.st1 = self.load_streams(observed_path)
-        self.st2 = self.load_streams(synthetic_path)
-        self.validate_streams()
-
-    def preprocess(self, st):
-        """Preprocess the streams."""
-        out = (
-            st.detrend("linear")
-            .taper(0.05)
-            .filter("bandpass", freqmin=0.01, freqmax=20)
-        )
-        return out
-
-    def validate_streams(self):
-        """Custom validation for streams."""
-        st1 = self.st1
-        st2 = self.st2
-        assert len(st1) == len(st2)
-        assert {tr.id for tr in st1} == {tr.id for tr in st2}
-
-    def load_streams(self, directory_path):
-        """Load all streams in a directory."""
-        traces = []
-        for path in Path(directory_path).rglob("*semd*"):
-            traces.append(read_trace(str(path)))
-        st = self.preprocess(obspy.Stream(traces).sort())
-        return st
-
-    def iterate_streams(self):
-        """Iterate streams, yield corresponding traces"""
-        st1, st2 = self.st1, self.st2
-        for tr1, tr2 in zip(st1, st2):
-            assert tr1.id == tr2.id
-            assert tr1.stats.sampling_rate == tr2.stats.sampling_rate
-            yield tr1, tr2
-
-    @cache
-    def calc_misfit(self):
-        """Calculate the misfit between streams."""
-        out = {}
-        for tr1, tr2 in self.iterate_streams():
-            misfit = simps((tr2.data - tr1.data) ** 2, dx=tr1.stats.delta)
-            out[tr1.id] = misfit
-        return out
-
-    @cache
-    def get_adjoint_sources(self):
-        """Return the adjoint source trace."""
-        out = []
-        for tr1, tr2 in self.iterate_streams():
-            new = tr1.copy()
-            new.data = tr2.data - tr1.data
-            out.append(new)
-        return out
-
-    def save_adjoint_sources(self, path="SEM"):
-        """Save adjoint sources to disk."""
-        path = Path(path)
-        path.mkdir(exist_ok=True, parents=True)
-        for tr in self.get_adjoint_sources():
-            stats = tr.stats
-            name = f"{stats.network}.{stats.station}.{stats.channel}.adj"
-            new_path = path / name
-            save_trace(tr, new_path)
-
-    def plot(self, trace_index=0):
-        """Create a plot of observed/synthetic."""
-        # tr1, tr2 = self.st1[trace_index], self.st2[trace_index]
-
-        # fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, figsize=(20, 8))
-        # ax1.plot(obsd.times() + obsd.stats.b, obsd.data, "b", label="obsd")
-        # ax1.plot(synt.times() + synt.stats.b, synt.data, "r", label="synt")
-        # ax1.set_xlim(obsd.stats.b, obsd.times()[-1] + obsd.stats.b)
-        # ax1.legend()
-        # ax1.legend(frameon=False)
-        # ax1.set_ylabel("Displacement (m)")
-        #
-        # ax2.plot(adj.times() + adj.stats.b, adj.data, "g", label="Adjoint Source")
-        # ax2.legend()
-        # ax2.legend(frameon=False)
-        # ax2.set_xlabel("Time (s)")
-        # ax.tick_params(axis="both", which="major", labelsize=14)
-
-
 class KernelKeeper:
     """A simple class for managing kernels."""
 
@@ -255,10 +157,14 @@ class KernelKeeper:
         df = pd.read_csv(file_path, delim_whitespace=True, names=names, header=None)
         return df
 
-    def plot(self, columns=('rho_p', 'alpha', 'beta')):
+    def plot(self, columns=('rhop', 'alpha', 'beta')):
         """
         Plot several kernels.
         """
+        fig, axes = plt.subplots(1, len(columns), figsize=(4*len(columns), 4))
+        for ax, column in zip(axes.flatten(), columns):
+            self.plot_single(column, ax=ax)
+        return fig, axes
 
     def plot_single(self, column, ax=None, scale=0.15):
         """Plot Rho, Alpha, Beta"""
@@ -311,14 +217,13 @@ if __name__ == "__main__":
 
     # --- Run True model
 
-    # # perturb velocity
+    # Set the True velocity
     new_line = "1 1 2700.d0 3000.d0 1820.d0 0 0 9999 9999 0 0 0 0 0 0 \n"
     ws.replace_par_line(262, new_line)
     # ws.run_forward(output_name="OUTPUT_FILES_TRUE")
-    #
-    # # --- Run forward initial model
-    # # reset velocity
-    new_line = "1 1 2670.d0 3000.d0 1800.d0 0 0 9999 9999 0 0 0 0 0 0 \n"
+
+    # Perturb the velocity
+    new_line = "1 1 2650.d0 2950.d0 1770.d0 0 0 9999 9999 0 0 0 0 0 0 \n"
     ws.replace_par_line(262, new_line)
     # ws.run_forward(output_name="OUTPUT_FILES_INITIAL")
 
@@ -335,5 +240,6 @@ if __name__ == "__main__":
 
     # --- plot kernel
     keeper = KernelKeeper(ws.work_path / "OUTPUT_FILES_ADJ_WF")
-    keeper.plot_single("rhop")
+    fig, _ = keeper.plot()
+    plt.tight_layout()
     breakpoint()
