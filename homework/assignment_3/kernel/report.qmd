@@ -59,7 +59,6 @@ in each direction.
 The source is located at x=1000, and z=2000 and the station is located at x=3000 and z=2000.
 
 
-
 ![Model and Source Receiver Geometry](outputs/a010_model_geometry.png){#fig-model width=300}
 
 
@@ -93,7 +92,7 @@ parameters file.
 
 ## Source
 
-An elastic force angled 0 degrees was used as the seismic source.
+An explosion-type source was selected.
 The source was located at x=1000m and z=2000m. A Ricker (2nd derivative of Gaussian)
 source-time function was selected with a dominant frequency of 10Hz. This gives an
 approximate maximum source frequency of 25Hz, which is the maximum recommended
@@ -101,15 +100,13 @@ frequency suggested by the SpecFEM2D output.
 
 ## Receivers
 
-Eleven evenly spaced receivers were located on the surface, starting at x=300m
-and ending at x=2700m (@fig-model). Their Z coordinate varies depending on the
-topography.
+Again, as single source is located at  x=3000 and z=2000 in the homogeneous model.
 
 # Simulation Parameters
 
 There were 25 nodes per element, corresponding to approximately 5 in each
 direction. However, since GLLs are not evenly spaced, the average spacing
-(as reported by SpecFEM2D) is 9.98m and the minimum spacing is 6.89m.
+(as reported by SpecFEM2D) is 12.5m and the minimum spacing is 8.63m.
 
 The simulation is run in P-SV mode rather than SH/membrane wave mode. It is
 Cartesian Planar simulation.
@@ -142,12 +139,11 @@ pre-processing step.
 
 # Initial model
 
-The initial model is the base model with density, p wave velocity, and s wave velocity
-all decreased by 50. 
+The initial model is the base model with the S wave velocity decreased by 50 m/s. 
 
 | Material | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
 |:--------:|:-----------------------:|:-------------------:|:-------------------:|
-|    1'    |          6,650          |        2,950        |        1,770        |
+|    1'    |          2,700          |        2,900        |        1,820        |
 
 
 # Kernel Procedure
@@ -159,44 +155,103 @@ To obtain the sensitivity kernels, the following procedure is employed:
 3. Calculate misfit between waveforms produced by the true and initial models and associated adjoint sources
 4. Run adjoint simulation and visualize the associated kernels
 
+The following sections show the different misfit functions and adjoint sources.
 
-# 
+# Waveform Misfit
+
+The waveform misfit is defined as [@bozdaug2011misfit]:
+
+$$
+    \chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N 
+    \int_0^T\left\|\mathbf{d}\left(\mathbf{x}_r, t\right)
+    -\mathbf{s}\left(\mathbf{x}_r, t, \mathbf{m}\right)\right\|^2 
+    \mathrm{~d} t
+$${#eq-wf-misfit}
+
+and the adjoint source as:
+
+$$
+    f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N \frac{1}{M_r}\left[d_i\left(\mathbf{x}_r, T-t\right)
+    -s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right)\right] w_r(T-t) 
+    \delta\left(\mathbf{x}-\mathbf{x}_r\right)
+$${#eq-wf-adjoint}
+
+@fig-wf-waveforms shows the "observed", synthetic, and adjoint source and
+@fig-wf-kernel shows the associated kernel.
+
+![Waveform Misfit: Waveforms and Adjoint Source](outputs/a040_wf_misfit_waveforms.png){#fig-wf-waveforms}
+
+![Waveform Misfit: Kernel](outputs/a040_wf_kernel.png){#fig-wf-kernel}
 
 
-# Results
+# Traveltime Misfit
 
-Figures @fig-xtraces and @fig-ztraces show the synthetic seismograms plotted as
-function of time and source-receiver distance. The seismograms calculated by
-SpecFEM2D were first filtered before displaying to remove frequencies outside the
-resolvable range of the model. A simple Butterworth bandpass filter was used with
-minium frequency of 0.05Hz and a maximum of 20Hz as implemented in ObsPy
-[@krischer2015obspy]. These frequencies were indicated
-as the minimum and maximum resolvable frequencies by the SpecFEM2D output.
+The cross-correlation traveltime misfit is defined as [@bozdaug2011misfit]:
 
-The P (first arrival) and S (second arrival) are both quite prominent.Later on there
-are also weaker phases which are discussed later on.
+$$
+\chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N\left[T_r^{\mathrm{obs}}-T_r(\mathbf{m})\right]^2
+$${#eq-tt-misfit}
 
-![Receiver Traces, X Component](OUTPUT_FILES/x_trace_plot.png){#fig-xtraces}
+and the adjoint source as:
 
-![Receiver Traces, Z Component](OUTPUT_FILES/z_trace_plot.png){#fig-ztraces}
+$$
+f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N\left[T_r^{\mathrm{obs}}-T_r(\mathbf{m})\right] \frac{1}{N_r} w_r(T-t) \partial_t s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right) \delta\left(\mathbf{x}-\mathbf{x}_r\right)
+$${#eq-tt-adjoint}
+
+@fig-tt-waveforms shows the "observed", synthetic, and adjoint source and
+@fig-tt-kernel shows the associated kernel.
+
+![Traveltime Misfit: Waveforms and Adjoint Source](outputs/a050_tt_misfit_waveforms.png){#fig-tt-waveforms}
+
+![Traveltime Misfit: Kernel](outputs/a050_tt_kernel.png){#fig-tt-kernel}
+
+
+
+# Amplitude Misfit
+
+The amplitude misfit is defined as [@bozdaug2011misfit]:
+
+$$
+\chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N\left[\ln \frac{A_r^{\mathrm{obs}}}{A_r(\mathbf{m})}\right]^2
+$${#eq-amp-misfit}
+
+and the adjoint source as:
+
+$$
+f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N \ln \left[\frac{A_r^{\mathrm{obs}}}{A_r(\mathbf{m})}\right] \frac{1}{M_r} w_r(T-t) s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right) \delta\left(\mathbf{x}-\mathbf{x}_r\right)
+$${#eq-ampo-adjoint}
+
+@fig-amp-waveforms shows the "observed", synthetic, and adjoint source and
+@fig-amp-kernel shows the associated kernel.
+
+![Amplitude Misfit: Waveforms and Adjoint Source](outputs/a060_amp_misfit_waveforms.png){#fig-amp-waveforms}
+
+![Amplitude Misfit: Kernel](outputs/a060_amp_kernel.png){#fig-amp-kernel}
 
 
 
 # Discussion
 
 Because potential stability and resolution issues were addressed, the simulation
-worked without major issues. The produced seismograms are reasonable, and a clear
-P-S separation is observable which, as expected, increases with source-receiver
-distance. It is more difficult, however, to interpret the other features in the
-seismogram, which could correspond to reflections, refractions, and,
-perhaps, the beginning of Rayleigh wave formation (although typically larger
-source-receiver distance is required for surface waves to form).
+worked without major issues. The produced seismograms are reasonable.
+
+The calculated kernels to and those presented by @bozdaug2011misfit [Figure 6]
+also show expected similarities. For example, for both waveform and traveltime
+kernels [@fig-wf-kernel] the extreme values tend to occur on the outside of the 
+"banana", whereas for the amplitude kernel more of the significant values occur
+inside the banana.
+
+It is interesting that the beta kernels are non-negligible for the 
+waveform misfit kernel (@fig-wf-kernel) and the traveltime misfit kernel
+(@fig-tt-kernel) even though no S waves should be generated by the simulation. I am
+still thinking about why this might be the case and checking the codes for mistakes.
+
+
 
 # Supplemental Materials
 
-The input files for this simulation, as well as jpeg images showing progression
-of the simulation at various points in time, are attached as supplemental
-material in the assignment submission.
+The python code used to run specfem, calculate misfits and adjoint sources, as well as
+visualize the kernels is submitted with this report in Canvas.
 
 
 # References

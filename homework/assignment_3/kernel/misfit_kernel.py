@@ -48,17 +48,23 @@ class Workspace:
     # --- Path and directory setup methods.
 
     @property
-    def data_path(self):
+    def data_path(self) -> Path:
         return self.work_path / "DATA"
 
     @property
-    def par_file_path(self):
+    def par_file_path(self) -> Path:
         return self.data_path / "Par_file"
 
     @property
-    def output_path(self):
+    def output_path(self) -> Path:
         out = self.work_path / "OUTPUT_FILES"
         out.mkdir(exist_ok=True, parents=True)
+        return out
+
+    @property
+    def source_path(self) -> Path:
+        out = self.data_path / "SOURCE"
+        assert out.exists()
         return out
 
     def refresh(self, only_data=False):
@@ -89,6 +95,8 @@ class Workspace:
         _ = self.xmesh()
         spec = self.xspec()
         if output_name:
+            if isinstance(output_name, Path):
+                output_name = output_name.name
             output_path = self.work_path / output_name
             if output_path.exists() and output_path.is_dir():
                 shutil.rmtree(output_path)
@@ -115,6 +123,16 @@ class Workspace:
     def replace_par_line(self, line_number, text):
         """Replace a line in the parfile."""
         replace_line(self.par_file_path, line_number, text)
+
+    def set_source_type(self, source_type: int):
+        """Set the source type. See source file for details."""
+        path = self.source_path
+        lines = path.read_text().split("\n")
+        for num, line in enumerate(lines):
+            if line.strip().lower().startswith("source_type"):
+                lines[num] = f"source_type                     = {source_type:d}"
+        with path.open('w') as fi:
+            fi.write('\n'.join(lines))
 
     # --- Private utils
 
@@ -144,12 +162,14 @@ class Workspace:
 class KernelKeeper:
     """A simple class for managing kernels."""
 
-    def __init__(self, output_directory):
+    def __init__(self, output_directory, sources=None, receivers=None):
         self.kernel_files = list(Path(output_directory).rglob('*kernel.dat'))
         # find rho alpha beta and load it
         out = [x for x in self.kernel_files if 'rhop_alpha_beta' in x.name]
-        assert len(out) == 1, "only one such kernel should exist."
+        assert len(out) == 1, "Exactly one kernel should exist."
         self.rho_alpha_beta = self.load_kernel_file(out[0])
+        self._sources = sources
+        self._receivers = receivers
 
     def load_kernel_file(self, file_path):
         """Load a particular kernel file into a dataframe."""
@@ -157,16 +177,19 @@ class KernelKeeper:
         df = pd.read_csv(file_path, delim_whitespace=True, names=names, header=None)
         return df
 
-    def plot(self, columns=('rhop', 'alpha', 'beta')):
+    def plot(self, columns=('rhop', 'alpha', 'beta'), scale=0.15, out_file=None):
         """
         Plot several kernels.
         """
-        fig, axes = plt.subplots(1, len(columns), figsize=(4*len(columns), 4))
+        fig, axes = plt.subplots(1, len(columns), figsize=(4 * len(columns), 4))
         for ax, column in zip(axes.flatten(), columns):
-            self.plot_single(column, ax=ax)
+            self.plot_single(column, ax=ax, scale=scale)
+        if out_file is not None:
+            plt.tight_layout()
+            fig.savefig(out_file)
         return fig, axes
 
-    def plot_single(self, column, ax=None, scale=0.15):
+    def plot_single(self, column, ax=None, scale=0.25):
         """Plot Rho, Alpha, Beta"""
         df = self.rho_alpha_beta
         data = self.rho_alpha_beta[column]
@@ -187,9 +210,14 @@ class KernelKeeper:
         ax.set_ylabel("Z (m)")
         ax.set_title(f"{column.title()} Kernel")
 
-        # Plot source and station
-        ax.scatter(1000, 2000, 1000, marker="*", color="black", edgecolor="white")
-        ax.scatter(3000, 2000, 450, marker="v", color="black", edgecolor="white")
+        # Plot source and
+        kwargs = dict(color="black", edgecolor="white")
+        if self._sources is not None:
+            for (x, z) in self._sources:
+                ax.scatter(x, z, 1000, marker="*", **kwargs)
+        if self._receivers is not None:
+            for (x, z) in self._receivers:
+                ax.scatter(x, z, 450, marker="v", **kwargs)
 
         plt.colorbar(im, ax=ax)
         ax.tick_params(axis='both', which='major', labelsize=14)
