@@ -2,7 +2,7 @@
 title: "GPGN 598A: Assignment #3"
 subtitle: Calculating Adjoint Kernels
 bibliography: references.bib
-date: 2023-03-04
+date: 2023-03-07
 author:
   - name: Derrick Chambers
     url: https://derchambers.com
@@ -57,6 +57,8 @@ was selected with a single source and a single receiver. The model extents are f
 in each direction. 
 
 The source is located at x=1000, and z=2000 and the station is located at x=3000 and z=2000.
+SpecFEM2D is then used to generate waveforms from the target model, referred to as the "observed"
+seismograms. 
 
 
 ![Model and Source Receiver Geometry](outputs/a010_model_geometry.png){#fig-model width=300}
@@ -74,20 +76,11 @@ The 2D model is composed of one elastic material which has the following propert
 
 Material attenuation was disabled.
 
-## Geometry and Grid Discretization
-
-The model is a basic layered-cake model with flat interfaces between boundaries
-with hypothetical topography applied in the most shallow layer.
-
-The Total model extents are 4000m in the x direction and the Z extents
-range from $\approx$ 3000m to 3350m depending on the topography. The total number
-of elements in the x direction in 100 and in the z direction is 75. This means
-each element is approximately 40m by 40m.
 
 ## Boundary Conditions
 
 Perfectly Matched Layers (PML) boundary conditions with 3 element thickness on all
-sides. The default attenuation parameters were left unchanged from the default
+sides. The attenuation parameters were left unchanged from the default
 parameters file.
 
 ## Source
@@ -98,9 +91,6 @@ source-time function was selected with a dominant frequency of 10Hz. This gives 
 approximate maximum source frequency of 25Hz, which is the maximum recommended
 frequency suggested by the SpecFEM2D output.
 
-## Receivers
-
-Again, as single source is located at  x=3000 and z=2000 in the homogeneous model.
 
 # Simulation Parameters
 
@@ -108,14 +98,13 @@ There were 25 nodes per element, corresponding to approximately 5 in each
 direction. However, since GLLs are not evenly spaced, the average spacing
 (as reported by SpecFEM2D) is 12.5m and the minimum spacing is 8.63m.
 
-The simulation is run in P-SV mode rather than SH/membrane wave mode. It is
-Cartesian Planar simulation.
+The Cartesian simulation is run in P-SV mode rather than SH/membrane wave mode. 
 
 ## CFL Stability
 
 The reported max CFL stability condition for this simulation is 0.38 which is less
 than the maximum recommended value of 0.5 so there shouldn't be any stability issues
-related to the CFL condition in this model.
+related to the CFL condition in this case.
 
 ## Wavelength Resolution
 
@@ -130,23 +119,25 @@ or 5.5 (for P waves), so there shouldn't be any resolution issues related to wav
 sampling.
 
 
-## Bandwidth
+## Waveform pre-processing
 
-The minimum and maximum frequencies removable by the model are 0.03 Hz and 29 Hz,
-respectively. These frequencies will be used to bandpass seismograms as part of the
-pre-processing step.
+The minimum and maximum frequencies resolvable by the model are 0.03 Hz and 29 Hz,
+respectively. These frequencies are used to bandpass seismograms output by specfem before
+calculating misfits or adjoint sources. The waveforms are also detrended using a linear fit
+and tapered with a Han window with a maximum percentage of %5 using the functionality provided
+by the ObsPy package [@beyreuther2010obspy].
 
 
 # Initial model
 
-The initial model is the base model with the S wave velocity decreased by 50 m/s. 
+The initial model is the base model with the S wave velocity decreased by 100 m/s. 
 
 | Material | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
 |:--------:|:-----------------------:|:-------------------:|:-------------------:|
 |    1'    |          2,700          |        2,900        |        1,820        |
 
 
-# Kernel Procedure
+# Procedure
 
 To obtain the sensitivity kernels, the following procedure is employed:
 
@@ -155,7 +146,7 @@ To obtain the sensitivity kernels, the following procedure is employed:
 3. Calculate misfit between waveforms produced by the true and initial models and associated adjoint sources
 4. Run adjoint simulation and visualize the associated kernels
 
-The following sections show the different misfit functions and adjoint sources.
+The following sections show the different misfit functions and adjoint sources used.
 
 # Waveform Misfit
 
@@ -233,7 +224,8 @@ $${#eq-ampo-adjoint}
 # Discussion
 
 Because potential stability and resolution issues were addressed, the simulation
-worked without major issues. The produced seismograms are reasonable.
+worked without observable issues, meaning the produced seismograms are seem reasonable
+and are free of obvious artifacts.
 
 The calculated kernels to and those presented by @bozdaug2011misfit [Figure 6]
 also show expected similarities. For example, for both waveform and traveltime
@@ -246,12 +238,15 @@ waveform misfit kernel (@fig-wf-kernel) and the traveltime misfit kernel
 (@fig-tt-kernel) even though no S waves should be generated by the simulation. I am
 still thinking about why this might be the case and checking the codes for mistakes.
 
+The density kernels, however, do appear to be negligible in all three cases, which
+is expected.
 
 
 # Supplemental Materials
 
 The python code used to run specfem, calculate misfits and adjoint sources, as well as
-visualize the kernels is submitted with this report in Canvas.
+visualize the kernels is submitted with this report in Canvas. The base specfem parameter
+file is also included.
 
 
 # References
