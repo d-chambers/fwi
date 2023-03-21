@@ -3,6 +3,8 @@ Generate the model geometry figure.
 """
 import matplotlib.pyplot as plt
 
+import specster
+
 import local
 
 
