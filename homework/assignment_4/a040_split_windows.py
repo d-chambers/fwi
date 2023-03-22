@@ -27,4 +27,3 @@ if __name__ == "__main__":
             path = local.split_wf_directory / phase_name / f"{name}.mseed"
             path.parent.mkdir(exist_ok=True, parents=True)
             phase_st.write(path, 'mseed')
-

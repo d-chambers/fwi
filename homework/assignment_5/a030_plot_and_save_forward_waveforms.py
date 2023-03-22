@@ -29,17 +29,26 @@ def plot_true_and_initial(st_true, st_init):
     return fig, ax
 
 
+def assert_not_same(st1, st2):
+    """Ensure the streams are not identical"""
+    st1.sort()
+    st2.sort()
+    for tr1, tr2 in zip(st1, st2):
+        assert not tr1 == tr2
+
+
 if __name__ == "__main__":
     cont_true = sp.Control2d(local.true_workspace)
     out_true = cont_true.output
     st_true = out_true.get_waveforms()
-    st_true.write(local.true_waveforms_path, 'mseed')
 
     cont_initial = sp.Control2d(local.initial_workspace)
     out_initial = cont_initial.output
     st_initial = out_initial.get_waveforms()
-    st_initial.write(local.initial_waveforms_path, 'mseed')
 
-    fig, ax = plot_true_and_initial(st_true, st_initial)
-    plt.tight_layout()
-    fig.savefig(local.waveform_plot)
+    # Ensure true and initial are not identical.
+
+    assert_not_same(st_true, st_initial)
+
+    st_initial.write(local.initial_waveforms_path, 'mseed')
+    st_true.write(local.true_waveforms_path, 'mseed')
