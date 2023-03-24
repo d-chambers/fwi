@@ -31,7 +31,11 @@ kernel_paths = output_path / "a060_kernel_outputs"
 kernel_plot = output_path / "a070_kernel_plots"
 
 # Defines the windows used for distinct phases
-windows = {"S": (26.5, 36.5), "SS": (36.5, 46.5)}
+windows = {
+    "S": (26.5, 36.5),
+    "SS": (36.5, 46.5),
+    "Whole": (26.5, 46.5),
+}
 
 
 # --- helper functions

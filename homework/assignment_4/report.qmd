@@ -1,8 +1,8 @@
 ---
 title: "GPGN 598A: Assignment #4"
-subtitle: More Kernels
+subtitle: More Single-Station Kernels
 bibliography: references.bib
-date: 2023-03-07
+date: 2023-03-23
 author:
   - name: Derrick Chambers
     url: https://derchambers.com
@@ -27,7 +27,6 @@ header-includes:
 The purpose of this assignment is to reproduce the simple SH example in @tromp2005seismic.
 
 
-
 # Prompt
 
 As we discussed during the class last week please extend previous assignment toward computing an event kernel:
@@ -35,35 +34,46 @@ As we discussed during the class last week please extend previous assignment tow
 First, compute S and SS kernels by mimicking the 2D example given in Tromp et al. 2005. 
 Use SPECFEM2D in the SH mode for a homogeneous model and compute S and SS kernels together using;
 
-    a) cross-correlation traveltime kernels (note that you need to window S and SS waves separately),
-    b) waveform misfit (use the same windows you use for traveltime kernels, also use one big window 
-        to observe the window effect on measurements).
+a) cross-correlation traveltime kernels (note that you need to window S and SS waves separately),
+b) waveform misfit (use the same windows you use for traveltime kernels, also use one big window 
+to observe the window effect on measurements).
 
 
-# True Model Development
+# Simulation and Model Description
 
 In order to understand the kernels in the simplest cases, a 2D homogenous model
-was selected with a single source and a single receiver. The model extents are from
-0m to 4,000m in both dimensions and the elements are 50m by 50m. There are 9 points
-in each direction. 
-
-The source is located at x=1000, and z=2000 and the station is located at x=3000 and z=2000.
-SpecFEM2D is then used to generate waveforms from the target model, referred to as the "observed"
-seismograms. 
+was selected with a single source and a single receiver. The model is based on 
+the first example in @tromp2005seismic, but some parameters were altered slightly
+or estimated if not provided in the paper. A few of the key parameters are shown in 
+the following table, and the complete data inputs are attached to this report.
 
 
-![Model and Source Receiver Geometry](outputs/a010_model_geometry.png){#fig-model width=300}
+|       Parameter        |     Value      | Units |
+|:----------------------:|:--------------:|:-----:|
+|        timestep        |       2        |  ms   |
+|   timesteping scheme   |    Newmark     |       |
+|          mode          |       SH       |       |
+|  x extents (min/max)   |    0 / 200     |  km   |
+|  z extents (min/max)   |     0 / 80     |  km   |
+| source location (x/z)  |  50.0 / 40.0   |  km   |
+|      source type       | vertical force |       |
+| station location (x/z) |  150.0 / 40.0  |  km   |
+
+
+
+Absorbing boundary conditions are used for all sides except the top which is a free surface.
+
 
 
 ## Material Properties
 
-The 2D model is composed of one elastic material which has the following properties: (@tbl-materials)
+The 2D model is composed of one elastic material which has the following properties:
 
 | Material  | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
 |:---------:|:-----------------------:|:-------------------:|:-------------------:|
-|     1     |          2,700          |        3,000        |        1,820        |
+|     1     |          2,600          |        5,800        |        3,200        |
 
-: Materials {#tbl-materials}
+: True Material Properties {#tbl-true-materials}
 
 Material attenuation was disabled.
 
@@ -72,61 +82,52 @@ Material attenuation was disabled.
 
 Perfectly Matched Layers (PML) boundary conditions with 3 element thickness on all
 sides. The attenuation parameters were left unchanged from the default
-parameters file.
-
-## Source
-
-An explosion-type source was selected.
-The source was located at x=1000m and z=2000m. A Ricker (2nd derivative of Gaussian)
-source-time function was selected with a dominant frequency of 10Hz. This gives an
-approximate maximum source frequency of 25Hz, which is the maximum recommended
-frequency suggested by the SpecFEM2D output.
+parameters file. The top of the model (Z=0) was set as a free surface.
 
 
 # Simulation Parameters
 
 There were 25 nodes per element, corresponding to approximately 5 in each
 direction. However, since GLLs are not evenly spaced, the average spacing
-(as reported by SpecFEM2D) is 12.5m and the minimum spacing is 8.63m.
+(as reported by SpecFEM2D) is 625m and the minimum spacing is 431m.
 
 The Cartesian simulation is run in P-SV mode rather than SH/membrane wave mode. 
 
 ## CFL Stability
 
-The reported max CFL stability condition for this simulation is 0.38 which is less
+The reported max CFL stability condition for this simulation is 0.27 which is less
 than the maximum recommended value of 0.5 so there shouldn't be any stability issues
 related to the CFL condition in this case.
 
 ## Wavelength Resolution
 
-Another important simulation consideration is wavelength resolution. SpecFEM2D
-recommends an average number of GLLs per wavelength of 4.5 for S waves and
+SpecFEM2D recommends an average number of GLLs per wavelength of 4.5 for S waves and
 5.5 for P waves. This constraint is, of course, governed by the mesh spacing
 and the lowest material velocity.
 
-The number of GLLs per s-wave is 5.83. There is no distribution since all elements
-are the same size. This is greater than the minimum recommended value of 4.5 (for S waves)
-or 5.5 (for P waves), so there shouldn't be any resolution issues related to wavelength
-sampling.
+The minimum number of GLLs per s-wave is 4.83, which is above the recommend value of 4.5
+so there shouldn't be any resolution issues. All elements are in solid regions.
 
 
 ## Waveform pre-processing
 
-The minimum and maximum frequencies resolvable by the model are 0.03 Hz and 29 Hz,
-respectively. These frequencies are used to bandpass seismograms output by specfem before
-calculating misfits or adjoint sources. The waveforms are also detrended using a linear fit
+The maximum frequencies resolvable by the model is 1.02 Hz, so a low-pass filter is applied
+at this frequency. The waveforms are also detrended using a linear fit
 and tapered with a Han window with a maximum percentage of %5 using the functionality provided
 by the ObsPy package [@beyreuther2010obspy].
+
+This preprocessing of waveforms is applied before calculating misfit functions and adjoint sources.
 
 
 # Initial model
 
-The initial model is the base model with the S wave velocity decreased by 100 m/s. 
+The initial model is the base model with the S wave velocity decreased by about 2.5%.
 
-| Material | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
-|:--------:|:-----------------------:|:-------------------:|:-------------------:|
-|    1'    |          2,700          |        2,900        |        1,820        |
+| Material  | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
+|:---------:|:-----------------------:|:-------------------:|:-------------------:|
+|     1     |          2,600          |        5,800        |        3,120        |
 
+: Initial Material Properties {#tbl-initial-materials}
 
 # Procedure
 
@@ -137,9 +138,11 @@ To obtain the sensitivity kernels, the following procedure is employed:
 3. Calculate misfit between waveforms produced by the true and initial models and associated adjoint sources
 4. Run adjoint simulation and visualize the associated kernels
 
-The following sections show the different misfit functions and adjoint sources used.
+The procedure is carried out for both S and SS phases separately, then for the whole
+waveform for each misfit function highlighted in the next section.
 
-# Waveform Misfit
+
+## Waveform Misfit
 
 The waveform misfit is defined as [@bozdaug2011misfit]:
 
@@ -158,15 +161,8 @@ $$
     \delta\left(\mathbf{x}-\mathbf{x}_r\right)
 $${#eq-wf-adjoint}
 
-@fig-wf-waveforms shows the "observed", synthetic, and adjoint source and
-@fig-wf-kernel shows the associated kernel.
 
-![Waveform Misfit: Waveforms and Adjoint Source](outputs/a040_wf_misfit_waveforms.png){#fig-wf-waveforms}
-
-![Waveform Misfit: Kernel](outputs/a040_wf_kernel.png){#fig-wf-kernel}
-
-
-# Traveltime Misfit
+## Traveltime Misfit
 
 The cross-correlation traveltime misfit is defined as [@bozdaug2011misfit]:
 
@@ -180,57 +176,67 @@ $$
 f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N\left[T_r^{\mathrm{obs}}-T_r(\mathbf{m})\right] \frac{1}{N_r} w_r(T-t) \partial_t s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right) \delta\left(\mathbf{x}-\mathbf{x}_r\right)
 $${#eq-tt-adjoint}
 
-@fig-tt-waveforms shows the "observed", synthetic, and adjoint source and
-@fig-tt-kernel shows the associated kernel.
 
-![Traveltime Misfit: Waveforms and Adjoint Source](outputs/a050_tt_misfit_waveforms.png){#fig-tt-waveforms}
+# Results
 
-![Traveltime Misfit: Kernel](outputs/a050_tt_kernel.png){#fig-tt-kernel}
+## Wavefroms
+
+The resulting "true" and "initial" waveforms recorded by the station are shown in
+@fig-waveforms, in addition to the windows used for the S and SS phase respectively.
 
 
+![True and Initial Waveforms (Y component)](outputs/a030_waveform_plot.png){#fig-waveforms}
 
-# Amplitude Misfit
 
-The amplitude misfit is defined as [@bozdaug2011misfit]:
+@fig-wf-s and @fig-wf-ss show the waveform misfit kernels for S and SS phases respectively.
 
-$$
-\chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N\left[\ln \frac{A_r^{\mathrm{obs}}}{A_r(\mathbf{m})}\right]^2
-$${#eq-amp-misfit}
 
-and the adjoint source as:
+![Waveform misfit kernel S phase](outputs/a070_kernel_plots/waveform_S.png){#fig-wf-s}
 
-$$
-f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N \ln \left[\frac{A_r^{\mathrm{obs}}}{A_r(\mathbf{m})}\right] \frac{1}{M_r} w_r(T-t) s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right) \delta\left(\mathbf{x}-\mathbf{x}_r\right)
-$${#eq-ampo-adjoint}
 
-@fig-amp-waveforms shows the "observed", synthetic, and adjoint source and
-@fig-amp-kernel shows the associated kernel.
+![Waveform misfit kernel SS phase](outputs/a070_kernel_plots/waveform_SS.png){#fig-wf-ss}
 
-![Amplitude Misfit: Waveforms and Adjoint Source](outputs/a060_amp_misfit_waveforms.png){#fig-amp-waveforms}
+![Waveform misfit kernel complete](outputs/a070_kernel_plots/waveform_Whole.png){#fig-wf-whole}
 
-![Amplitude Misfit: Kernel](outputs/a060_amp_kernel.png){#fig-amp-kernel}
 
+@fig-tt-s and @fig-tt-ss show the travel-time misfit kernels for S and SS phases
+respectively.
+
+
+![Travel time misfit kernel S phase](outputs/a070_kernel_plots/travel_time_S.png){#fig-tt-s}
+
+
+![Travel time misfit kernel SS phase](outputs/a070_kernel_plots/travel_time_SS.png){#fig-tt-ss}
+
+
+![Travel time misfit kernel complete](outputs/a070_kernel_plots/travel_time_Whole.png){#fig-tt-whole}
 
 
 # Discussion
 
-Because potential stability and resolution issues were addressed, the simulation
-worked without observable issues, meaning the produced seismograms are seem reasonable
-and are free of obvious artifacts.
+The waveforms (@fig-waveforms) appear free of significant numerical issues and since the CFL and
+waveform resolution criteria were met, the model is likely free from significant
+stability or resolution artefacts.
 
-The calculated kernels to and those presented by @bozdaug2011misfit [Figure 6]
-also show expected similarities. For example, for both waveform and traveltime
-kernels [@fig-wf-kernel] the extreme values tend to occur on the outside of the 
-"banana", whereas for the amplitude kernel more of the significant values occur
-inside the banana.
+However, there are some artefacts visible in each of the kernels due to imperfect
+absorbing boundary conditions. These are particularly visible in the SS kernels
+(@fig-wf-ss and @fig-tt-ss) where a faint reflection of the "bunny ears" kernel is
+observed if reflected over the source-receiver line. The side lobes (the hyperbola
+to the left of the source and the right of the station) are also suspect, since
+the main ray paths should only travel between the stations. These may be due to
+reflections from the imperfect boundaries on the right/left sides, or perhaps
+some data processing artefact. However, these also occur in the figures presented
+by @tromp2005seismic so it is not an issue unique to this implementation.
 
-It is interesting that the beta kernels are non-negligible for the 
-waveform misfit kernel (@fig-wf-kernel) and the traveltime misfit kernel
-(@fig-tt-kernel) even though no S waves should be generated by the simulation. I am
-still thinking about why this might be the case and checking the codes for mistakes.
-
-The density kernels, however, do appear to be negligible in all three cases, which
-is expected.
+The benefits of windowing here are well illustrated by comparing the whole waveform 
+kernels with the windowed kernels; smaller phases, such as SS, receive less weight 
+and thus appear fainter in @fig-tt-whole and @fig-wf-whole than when seperated into
+their own kernels. The difference in kernel amplitude is more pronounced for the 
+waveform kernels, but also appears in the travel time kernels. If the difference in 
+energy were even greater, this emphasis and de-emphasis would be even greater, 
+leading the higher amplitude waves to dominate the kernels. Of cousre, and 
+especially in real-world data that can be dominated by surface waves, this is often 
+not desirable, hence the need for windowing.
 
 
 # Supplemental Materials
@@ -238,6 +244,5 @@ is expected.
 The python code used to run specfem, calculate misfits and adjoint sources, as well as
 visualize the kernels is submitted with this report in Canvas. The base specfem parameter
 file is also included.
-
 
 # References
