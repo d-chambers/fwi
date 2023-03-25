@@ -115,17 +115,14 @@ The minimum number of GLLs per s-wave is 4.83, which is above the recommend valu
 so there shouldn't be any resolution issues. All elements are in solid regions.
 
 
-## Waveform pre-processing
 
-The maximum frequencies resolvable by the model is 1.02 Hz, so a low-pass filter is applied
-at this frequency. The waveforms are also detrended using a linear fit
-and tapered with a Han window with a maximum percentage of %5 using the functionality provided
-by the ObsPy package [@beyreuther2010obspy].
+## Station Distribution
 
-This preprocessing of waveforms is applied before calculating misfit functions and adjoint sources.
+Stations were embedded in the media from 10km to 200km in increments of 10km in the X
+direction and from 10km to 70km in the Z direction, thus forming a grid of 132 stations.
 
 
-# Initial model
+## Initial model
 
 The initial model is the base model with the S wave velocity decreased by about 2.5%.
 
@@ -147,7 +144,18 @@ To obtain the sensitivity kernels, the following procedure is employed:
 6. Visualize raw and muted kernels
 7. 
 The procedure is carried out for the entire waveform window for each station.
-The misfit functions used are described in the next sections.
+The misfit functions used are described in the following sections.
+
+
+## Waveform pre-processing
+
+The maximum frequencies resolvable by the model is 1.02 Hz, so a low-pass filter is applied
+at this frequency. The waveforms are also detrended using a linear fit
+and tapered with a Han window with a maximum percentage of %5 using the functionality provided
+by the ObsPy package [@beyreuther2010obspy].
+
+This preprocessing of waveforms is applied before calculating misfit functions and adjoint sources.
+
 
 ## Waveform Misfit
 
@@ -201,7 +209,17 @@ The following figures show the raw and muted travel-time misfit event kernels:
 
 # Discussion
 
+The waveform misfit kernel is much more effected by high amplitude values at the source 
+location than the travel time misfit kernels. For example, comparing figure @fig-wf-raw with
+@fig-wf-muted, until the source region is muted, its high amplitude completely dominates
+the kernel image. For the travel time misfit kernel, however, both the source and receiver
+have significant amplitudes (compare @fig-tt-raw, which has clear station imprints, to 
+@fig-tt-muted). 
 
+In both cases, the kernel highlight the nature of the vertical force; most S energy is
+generated perpendicular to the source axis (positive Z) and less energy above and below 
+the source, though this source preference is most pronounced in the travel time misfit 
+kernels.
 
 
 # Supplemental Materials
