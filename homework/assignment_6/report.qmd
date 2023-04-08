@@ -1,0 +1,119 @@
+---
+title: "GPGN 598A: Assignment #6"
+subtitle: Ray Tomography
+bibliography: references.bib
+date: 2023-04-07
+author:
+  - name: Derrick Chambers
+    url: https://derchambers.com
+    affiliation: Colorado School of Mines
+    affiliation-url: https://mines.edu
+
+format:
+  pdf:
+    # toc: true
+    # toc-depth: 1
+    number-sections: true
+    colorlinks: true
+header-includes:
+ \usepackage{wrapfig}
+ \usepackage{float}
+ \floatplacement{figure}{H}
+ \usepackage{amsmath}
+---
+
+# Abstract
+
+The purpose of this assignment is to explore ray-based tomography techniques
+for estimating earth structure.
+
+# Forward Problem
+
+## Model Parameterization
+
+For this assignment, perturbations of the current earth model 
+are described in terms of $M$ basis functions:
+
+$$
+\delta ln(c(x)) = \sum_{k=1}^{M} \delta m_k B_k (x)
+$${#eq-peturb}
+
+In this case, the basis functions selected ($B_k$) are the spherical splines of 
+@wang1995spherical. 
+
+::: {.callout-note appearance="simple"}
+
+## Question 1
+
+What is the value of the q = 8 spline function that is centered at (longitude, latitude)
+= ($−117^{\circ}$ , $34^{\circ}$ ), evaluated at the point ($−117.05^{\circ}$ , $34.25^{\circ}$ )?
+
+:::
+
+```{python}
+from raytape import spline_vals
+
+out = spline_vals(
+    clon=-117,
+    clat=34,
+    scale=8,
+    lon_vec=[-117.05],
+    lat_vec=[34.25],
+    cols=1,
+)
+print(out[0][0])
+```
+
+
+::: {.callout-note appearance="simple"}
+
+## Question 2
+
+Formulate an entry of the design matrix. From the class notes, the ray theory travel-
+time perturbation for the ith source-receiver combination is given by
+
+$$
+\delta T_i = - \int_{ray_i} c^{-1} \delta ln(c) ds,
+$${#eq-dT}
+
+where ds denotes a segment of the ith ray. Show how this leads to $d = G \delta m$, 
+where the data vector is given by
+
+$$
+d = (\delta T_{1} , . . . , \delta T_{i} , . . . , \delta T_{N} )^{T},
+$${#eq-d}
+
+and write the expression for the $G_{ik}$ element of the design matrix $G$.
+:::
+
+To derive an expression for $G_{ik}$ we can work backwards by substituting 
+@eq-peturb into @eq-d. 
+
+$$
+\delta T_{i} = \int_{ray_i} c^{-1} \sum_{k=1}^{M} \delta m_k B_k (x) ds
+$$
+
+And since the summation term can be rewritten in terms of a dot product
+(using Einstein's summation notation)
+
+$$
+\delta T_{i} = \int_{ray_i} c^{-1} B_k  ds  \cdot \delta m_k  
+$$
+
+Hence,
+
+$$
+G_{ik} = \int_{ray_i} c^{-1} B_k  ds
+$${#eq-gik}
+
+and thus it follows:
+
+$$
+d = G \delta m
+$$
+
+
+
+
+
+# References

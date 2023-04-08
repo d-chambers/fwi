@@ -1,109 +1,10 @@
 """
-Utils for the tape module.
+Module for computing the spline values.
 """
-
 import numpy as np
-from scipy.interpolate import griddata
 
 
-def grid_to_vector(x_min, x_max, x_num, y_min, y_max):
-    """
-    Creates a grid of points and returns the x and y coordinates as vectors.
-
-    Spacing is set as equal in x and y directions.
-
-    Parameters
-    ----------
-    x_min
-        The minimum x value
-    x_max
-        the maximum x value
-    x_num
-        The number of x values
-    y_min
-        The minimum y value
-    y_max
-
-    Examples
-    --------
-    >>> xvec, yvec = grid_to_vector(0, 1, 2, 0, 1, 2)
-    >>> xvec
-    array([0. , 0.5, 1. , 0. , 0.5, 1. , 0. , 0.5, 1. ])
-    >>> yvec
-    array([0., 0., 0., 0.5, 0.5, 0.5, 1., 1., 1.])
-    """
-    xvec0 = np.linspace(x_min, x_max, x_num)
-    dx = xvec0[1] - xvec0[0]
-    yvec0 = np.arange(y_min, y_max, dx)
-    X, Y = np.meshgrid(xvec0, yvec0, indexing='ij')
-    xvec = X.flatten()
-    yvec = Y.flatten()
-
-    return xvec, yvec
-
-
-def get_random_vector(min_value, max_value, n):
-    """
-    Returns a random vector of length n between min_value and max_value.
-
-    Parameters
-    ----------
-    min_value
-        The minimum value
-    max_value
-        The maximum value
-    n
-        The length of the vector
-
-    Examples
-    --------
-    >>> min_value = 0
-    >>> max_value = 1
-    >>> n = 2
-    >>> get_random_vector(min_value, max_value, n)
-    array([0.53876639, 0.52646292])
-    """
-    return np.random.rand(n) * (max_value - min_value) + min_value
-
-
-def grid_extrapolate(
-        xvec, yvec, zvec, npts, interpolation_type='linear',
-):
-    """
-    Interpolates data on a 2D grid.
-
-    Parameters
-    ----------
-    xvec
-        The x coordinates
-    yvec
-        The y coordinates
-    zvec
-        The z coordinates
-    npts
-        The number of points to interpolate
-    interpolation_type
-        The type of interpolation to use. Default is linear. Other options are
-        'nearest', 'cubic', and 'quintic'.
-
-    Notes
-    -----
-    griddata returns slightly different values than matlab's griddata; we just
-    have to deal with it.
-    """
-    # Construct mesh with UNIFORM spacing in x and y directions
-    xlin = np.linspace(np.min(xvec), np.max(xvec), npts)
-    dx = xlin[1] - xlin[0]
-    ylin = np.arange(np.min(yvec), np.max(yvec) + dx, dx)
-    X, Y = np.meshgrid(xlin, ylin)
-
-    # Interpolate data onto the grid
-    points = np.column_stack((xvec, yvec))
-    Z = griddata(points, zvec, (X, Y), method=interpolation_type)
-    return X, Y, Z
-
-
-def spline_vals(clon, clat, scale, lon_vec, lat_vec, opts):
+def spline_vals(clon, clat, scale, lon_vec, lat_vec, cols):
     """
     Given a spline gridpoint, this returns the value of the spline
     at all the input datapoints.
@@ -112,7 +13,7 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, opts):
     ----------
     clon
         The longitude of the gridpoint
-    clat    
+    clat
         The latitude of the gridpoint
     scale
         The scale of the spline (0-10)
@@ -120,15 +21,18 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, opts):
         The longitudes of the datapoints
     lat_vec
         The latitudes of the datapoints
-    opts    
-        The number of columns of ff to return
+    cols
+        The number of columns of ff to return.
+        Columns 1-5 correspond to:
+            'f', 'df/d phi', 'df/d theta', 'laplacian(f)', '|grad(f)|'
 
     Returns
     -------
-    value of the spline function (and derivatives) evaluated at 
+    value of the spline function (and derivatives) evaluated at
     the specified lon-lat points.
 
     """
+    lon_vec, lat_vec = np.array(lon_vec), np.array(lat_vec)
     # convert to theta-phi
     deg = 180 / np.pi
     ph = clon / deg
@@ -137,7 +41,6 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, opts):
     th_vec = (90 - lat_vec) / deg
 
     # options and parameters -- q controls the scale (width) of the spline
-    ncol = opts[0]  # number of columns of ff to return
     nf = 2 ** scale
     c72 = np.cos(72 / deg)
     base = np.arccos(c72 / (1 - c72))
@@ -167,9 +70,9 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, opts):
     if sum(ind_list) != len(dif):
         raise ValueError("datapoints have not been partitioned properly")
 
-    ff = np.zeros((ndata, ncol))
+    ff = np.zeros((ndata, cols))
 
-    if ncol == 1:
+    if cols == 1:
         part1 = (-0.25 * dif[inds2] + 0.75) * dif[inds2] - 0.75
         ff[inds2, 0] = (part1 * dif[inds2] + 0.25)
         sub1 = 0.75 * r[inds3] - 1.5
@@ -199,7 +102,7 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, opts):
         ff[inds2, 0] = ((-0.25 * dif[inds2] + 0.75) * dif[inds2] - 0.75) * dif[inds2] + 0.25
         ff[inds2, 1] = dq * (-0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2) * dadp[inds2]
         ff[inds2, 2] = dq * (-0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2) * dadt[inds2]
-        if ncol >= 4:
+        if cols >= 4:
             sub1 = (-0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2)
             ff[inds2, 3] = dq * (3 - 1.5 * r[inds2] + cotdel[inds2] * sub1)
             ff[inds2, 4] = 0.75 * db ** -3 * (2 * db - del_[inds2]) ** 2
@@ -208,7 +111,7 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, opts):
         ff[inds3, 0] = (0.75 * r[inds3] - 1.5) * (r[inds3] ** 2) + 1
         ff[inds3, 1] = dq * (-3 * r[inds3] + 2.25 * r[inds3] ** 2) * dadp[inds3]
         ff[inds3, 2] = dq * (-3 * r[inds3] + 2.25 * r[inds3] ** 2) * dadt[inds3]
-        if ncol >= 4:
+        if cols >= 4:
             ff[inds3, 3] = dq * (-3 + 4.5 * r[inds3] + cotdel[inds3] * (-3 * r[inds3] + 2.25 * r[inds3] ** 2))
             ff[inds3, 4] = 0.75 * db ** -3 * (4 * db - 3 * del_[inds3]) * del_[inds3]
 
@@ -216,17 +119,17 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, opts):
         # FIX THIS: see Wang & Dahlen (1995)
         # here we simply assign it the closest value
         if len(inds4) > 0:
-            if ncol > 3:
+            if cols > 3:
                 igood = np.where(dif > -1 + zeps)[0]
                 imin = np.argmin(r[igood])
                 d2val = ff[imin, 3]
-                tvec = np.zeros(ncol)
+                tvec = np.zeros(cols)
                 tvec[0] = 1
                 tvec[-1] = d2val
-                ff[inds4, 0:ncol] = np.tile(tvec, (len(inds4), 1))
-            elif ncol == 3:
+                ff[inds4, 0:cols] = np.tile(tvec, (len(inds4), 1))
+            elif cols == 3:
                 ff[inds4, 0:3] = np.array([1, 0, 0])
-            elif ncol == 1:
+            elif cols == 1:
                 ff[inds4, 0] = 1
 
     return ff

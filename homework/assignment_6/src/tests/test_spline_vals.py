@@ -9,19 +9,21 @@ damping.
 
 calls spline_vals.m
 """
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import griddata
 
-from utils import grid_to_vector, spline_vals, grid_extrapolate
+from raytape.utils import grid_to_vector, grid_extrapolate
+from raytape import spline_vals
 
 
 def plot_spline(clon, clat, scale, lon, lat, ncol):
     """
     Plot a spherical spline basis function
     """
-    ff = spline_vals(clon, clat, scale, lon, lat, [ncol])
+    ff = spline_vals(clon, clat, scale, lon, lat, ncol)
     X, Y, Z = grid_extrapolate(lon, lat, ff[:, 0], 100, 'cubic')
     fig, ax = plt.subplots()
     pc = ax.pcolor(X, Y, Z)
@@ -42,7 +44,7 @@ def plot_surface_gradient(clon, clat, scale, ncol, lonmin, lonmax, latmin, latma
 
     X, Y, Z = grid_extrapolate(lon, lat, ff[:, 4])
     lon, lat = np.meshgrid(lon, lat)
-    ff = spline_vals(clon, clat, scale, lon.flatten(), lat.flatten(), [ncol])
+    ff = spline_vals(clon, clat, scale, lon.flatten(), lat.flatten(), ncol)
     ff = np.reshape(ff, (lon.shape[0], lon.shape[1], -1))
 
     # plot the surface gradient
@@ -87,12 +89,12 @@ if __name__ == '__main__':
     clon = -118
 
     fig, ax = plot_spline(clon, clat, scale, lon, lat, ncol=1)
-    # break
-    fig.savefig('figures/')
+    # Path("figures").mkdir(exist_ok=True, parents=True)
+    # fig.savefig('figures/spline_test.png')
 
     # ----------------------------
     ncol = 5
-    ff = spline_vals(clon, clat, scale, lon, lat, [ncol])
+    ff = spline_vals(clon, clat, scale, lon, lat, ncol)
 
     dfdp = ff[:, 1]
     dfdt = ff[:, 2]
@@ -107,7 +109,7 @@ if __name__ == '__main__':
     d1max = max([np.max(np.abs(dfdp)), np.max(np.abs(dfdt))])
 
     # plot
-    fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(6, 9))
+    fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(8, 6))
     stitd = ['f', 'df/d phi', 'df/d theta', 'laplacian(f)', '|grad(f)|']
 
     for ii in range(len(stitd)):
@@ -120,7 +122,10 @@ if __name__ == '__main__':
         ax.set_aspect('equal')
         ax.axis(ax1)
     fig.tight_layout()
+    axs[-1, -1].set_axis_off()
+    # fig.savefig("figures/spline_test2.png")
 
+    plt.show()
     # ------------------------------------
     # plot the surface gradient
     # fig = plot_surface_gradient(clon, clat, scale, ncol, lonmin, lonmax, latmin, latmax, title=stitd[-1])
