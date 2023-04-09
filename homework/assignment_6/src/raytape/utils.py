@@ -5,6 +5,7 @@ from functools import cache
 import numpy as np
 
 from scipy.interpolate import griddata
+from obspy.geodetics import gps2dist_azimuth
 
 import pyproj
 
@@ -42,6 +43,63 @@ def get_waypoints(latlon_1, latlon_2, npts):
     lonlats.insert(0, (lon1, lat1))
     lonlats.append((lon2, lat2))
     return np.array(lonlats)[:, (1, 0)]  # order lat/lon
+
+
+def get_distance(latlon_1, latlon_2):
+    """
+    Get the great circle distance from latlon1 to latlon2.
+
+    Parameters
+    ----------
+    latlon_1
+        A 2D array of latitude longitude.
+    latlon_2
+        A 2D array of latitude longitude.
+    npts
+        The number of points between latlon1 and latlon2.
+
+    Returns
+    -------
+    A 2D array of lat/lon values of length npts.
+    """
+    geod = get_geode()
+    lons = [latlon_1[1], latlon_2[1]]
+    lats = [latlon_1[0], latlon_2[0]]
+    return geod.line_length(lons, lats)
+
+
+def get_distances(lats1, lons1, lats2, lons2):
+    """
+    Get the great circle distance between each set of points.
+
+    Parameters
+    ----------
+    lats1
+        An array of latitudes
+    lons1
+        An array of longitudes
+    lats2
+        An array of latitudes
+    lons2
+        An array of longitudes
+
+    Returns
+    -------
+    An array of distances (in m) for each lats/lons pair.
+    """
+    def _interweave(ar1, ar2):
+        """Interweave array 1 and 2."""
+        out = np.empty(len(ar1)*2)
+        out[::2] = ar1
+        out[1::2] = ar2
+        return out
+
+    lats = _interweave(lats1, lats2)
+    lons = _interweave(lons1, lons2)
+
+    geod = get_geode()
+    dists = geod.line_lengths(lons, lats)[::2]
+    return dists
 
 
 def grid_to_vector(x_min, x_max, x_num, y_min, y_max):

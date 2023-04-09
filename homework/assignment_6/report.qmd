@@ -112,7 +112,21 @@ $$
 d = G \delta m
 $$
 
+::: {.callout-note appearance="simple"}
 
+## Question 3
+
+What is the value of G ik with i = 126 and k = 204? What does each row of G
+correspond to? What does each column of G correspond to?
+
+:::
+
+```{python}
+import pandas as pd
+
+df = pd.read_csv("outputs/G.csv")
+print(df.shape)
+```
 
 
 
