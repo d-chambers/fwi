@@ -1,15 +1,16 @@
 """
-Script to compute G.
+Makes a plot of the design matrix to make sure t
 """
+import random
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
+import matplotlib.pyplot as plt
 
-from raytape.compute_gik_ray import calc_G
+from raytape.viz import plot_design_matrix
+
 
 if __name__ == "__main__":
-    # load sources
     data_path = Path('inputs')
     slons, slats, _ = np.loadtxt(data_path / 'events_lonlat.dat', skiprows=1, unpack=True)
     nsrc = len(slats)
@@ -22,12 +23,11 @@ if __name__ == "__main__":
     qlons, qlats = np.loadtxt(data_path / 'con_lonlat_q08.dat', unpack=True)
     nspline = len(qlats)
 
-    # Set the velocity. Can be a scalar or an array of shape nspline.
-    velocity = 3500
+    ar = np.load("outputs/G.npy")
 
-    out = calc_G(
-        slats, slons, rlats, rlons, qlats, qlons, velocity,
-        npts=1000, scale=8,
-    )
+    out_path = Path("outputs/ray_plots")
+    out_path.mkdir(exist_ok=True, parents=True)
 
-    np.save("outputs/G.npy", out)
+    for i in random.sample(range(nsrc * nrec), 10):
+        fig, ax = plot_design_matrix(qlats, qlons, slats, slons, rlats, rlons, ar, index=i)
+        fig.savefig(out_path / f"{i:04d}.png")

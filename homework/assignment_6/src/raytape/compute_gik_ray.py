@@ -11,19 +11,6 @@ from raytape.utils import get_waypoints, get_distance, get_distances
 from raytape.spline import spline_vals
 
 
-def plot_center_spline_points(qlats, qlons):
-    """Visualize the center points for spline functions."""
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(qlons, qlats, '.')
-    for i in range(len(qlats)):
-        plt.text(qlons[i], qlats[i], str(i + 1), fontsize=6)
-    ax.set_aspect('equal')
-    ax.set_xlabel(' Longitude')
-    ax.set_ylabel(' Latitude')
-    ax.set_title(' Center-points of spherical spline basis functions')
-    return fig, ax
-
-
 def _get_ray_points(slats, slons, rlats, rlons, npts):
     """
     Get the points between sources and receivers.
@@ -41,7 +28,7 @@ def _get_ray_points(slats, slons, rlats, rlons, npts):
     return out
 
 
-def calc_G(slats, slons, rlats, rlons, qlats, qlons, velocity, npts=1000, scale=8)->pd.DataFrame:
+def calc_G(slats, slons, rlats, rlons, qlats, qlons, velocity, npts=1000, scale=8) -> pd.DataFrame:
     """Calculate the design matrix G."""
     assert len(slats) == len(slons)
     assert len(rlats) == len(rlons)
