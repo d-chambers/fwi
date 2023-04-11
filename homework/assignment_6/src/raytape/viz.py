@@ -19,6 +19,23 @@ def plot_center_spline_points(qlats, qlons):
     return fig, ax
 
 
+def plot_velocity_changes(lats, lons, velocity_change, clim=None):
+    """Plot the change in velocity."""
+    fig, ax = plt.subplots(1, 1)
+
+    # Plot the map using imshow and set extent
+    im = ax.imshow(velocity_change, cmap='viridis', extent=[lons[0], lons[1], lats[0], lats[1]])
+    im.set_clim(clim)
+    # Add a colorbar to show the values represented by the colors in the plot
+    cbar = fig.colorbar(im, ax=ax)
+
+    # Set the title and axis labels
+    ax.set_title('Map Example')
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+    return fig, ax
+
+
 def plot_design_matrix(qlats, qlons, slats, slons, rlats, rlons, ar, index=0):
     """Plot an index of the design matrix."""
     # create figure and axes

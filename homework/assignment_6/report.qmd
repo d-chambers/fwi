@@ -146,7 +146,7 @@ ray paths, I am convinced the G matrix contains reasonable values because the sp
 nearest the ray path have the highest values with smoothly varying values away from
 the ray path.
 
-![Example Ray Path and G values.](outputs/ray_plots/0282.png){#fig-ray-path}
+![Example Ray Path and G values.](outputs/ray_plots/example.png){#fig-ray-path}
 
 
 :::{.callout-note appearance="simple"}
@@ -183,7 +183,11 @@ The dimensions of the requested symbols are as follows:
 | $G^T G$    | k x k      |
 | $G^T d$    | k x 1      |
 
-
+:::{.callout-note}
+The provided $d$ array is the difference between the observed travel times
+and the predicted. Otherwise, we would need to calculate this value from 
+travel times, phase picks, and event origin times.
+:::
 
 :::{.callout-note appearance="simple"}
 
@@ -192,8 +196,80 @@ The dimensions of the requested symbols are as follows:
 Compute δm using the formula above. What do you get, and why is this the case?
 :::
 
-The above operation isn't possible; the appropriate linear algebra inverse function
-raising an error stating that the matrix $G^T G$ is a singular matrix.
+The above operation isn't possible; the inverse function
+raises an error stating that the matrix $G^T G$ is a singular.
 
+
+:::{.callout-note appearance="simple"}
+
+# Question 2d
+
+Compute δm for a range of λ values: for example, try
+lamvec = 10.^linspace( log10(minlam), log10(maxlam), numlam);
+with λ min = 0.1 and λ max = 40.0.
+
+:::
+
+The following plots show the requested $\delta m$ values for various values
+of $lambda$:
+
+```{python}
+#| echo: false
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+dir_path = Path("outputs/a050_velocity_change_plots")
+
+
+
+# Plot PNG files
+for png_file in sorted(dir_path.glob("*.png")):
+    img = plt.imread(png_file)
+    plt.imshow(img)
+    plt.gca().axis('off')
+    plt.show()
+```
+
+As the values of $\lambda$ increase, the results appeared more "smoothed" and the high 
+amplitude anomalies around the boarder of the checkerboard begin to vanish. Clearly, 
+some $\lambda$ is required but it would be somewhat subjective to determine the right
+value of the initial model perturbations weren't as obvious.
+
+Using the same parameters as before, the inversion was run again but this time only
+including 5 events. The results are similar to those produced by using all of the events
+but lack some resolution. 
+
+
+```{python}
+#| echo: false
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+dir_path = Path("outputs/a070_velocity_change_reduced_plots")
+
+
+
+# Plot PNG files
+for png_file in sorted(dir_path.glob("*.png")):
+    img = plt.imread(png_file)
+    plt.imshow(img)
+    plt.gca().axis('off')
+    plt.show()
+```
+
+
+:::{.callout-note appearance="simple"}
+
+# Question 2g
+
+What are two ways to stabilize the inverse problem, given total control over the 
+experimental design?
+
+:::
+
+The inverse problem can be stabilized by either 1) increasing the ray path coverage,
+e.g., by adding more stations and sources in areas that have little coverage, or two,
+better conditioning for the design matrix. The latter point can be achieved with a
+singular value decomposition.
 
 # References
