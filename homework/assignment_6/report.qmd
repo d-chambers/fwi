@@ -43,7 +43,7 @@ In this case, the basis functions selected ($B_k$) are the spherical splines of
 
 ::: {.callout-note appearance="simple"}
 
-## Question 1
+## Question 1a
 
 What is the value of the q = 8 spline function that is centered at (longitude, latitude)
 = ($−117^{\circ}$ , $34^{\circ}$ ), evaluated at the point ($−117.05^{\circ}$ , $34.25^{\circ}$ )?
@@ -67,7 +67,7 @@ print(out[0][0])
 
 ::: {.callout-note appearance="simple"}
 
-## Question 2
+## Question 1b
 
 Formulate an entry of the design matrix. From the class notes, the ray theory travel-
 time perturbation for the ith source-receiver combination is given by
@@ -114,20 +114,86 @@ $$
 
 ::: {.callout-note appearance="simple"}
 
-## Question 3
+## Question 1c
 
 What is the value of G ik with i = 126 and k = 204? What does each row of G
 correspond to? What does each column of G correspond to?
 
 :::
 
-```{python}
-import pandas as pd
 
-df = pd.read_csv("outputs/G.csv")
-print(df.shape)
+```{python}
+import numpy as np
+
+ar = np.load("outputs/G.npy")
+print(ar[126, 204])
+print(ar[125, 203])
 ```
 
+Each row of G corresponds to a particular ray and each column corresponds to the value
+of a spline basis function.
+
+:::{callout-note}
+Because python indexing starts at 0, and Matlab's starts at 1, I have printed both
+the G value for the requested index and the previous index (which will match the
+Matlab answer.) 
+:::
+
+To double check the values in the G matrix, I created several plots of random ray paths
+showing a straight-line from source to receiver and the values of the effected spline
+functions. @fig-ray-path shows one such example. After plotting approximately 100
+ray paths, I am convinced the G matrix contains reasonable values because the splines
+nearest the ray path have the highest values with smoothly varying values away from
+the ray path.
+
+![Example Ray Path and G values.](outputs/ray_plots/0282.png){#fig-ray-path}
+
+
+:::{.callout-note appearance="simple"}
+
+# Question 2a
+
+Write the symbolic expression for the solution δm to the least squares problem Gδm =
+d in the case where GT G is full rank. List the dimensions of δm, d, G, GT G, and
+GT d
+
+:::
+
+Assuming G is full rank and thus doesn't require damping/conditioning:
+
+$$
+G \delta m = d
+$$
+
+$$
+G^T G \delta m = G^T d
+$$
+
+$$
+\delta m = (G^T G)^{-1} G^T d
+$${#eq-delta_m}
+
+The dimensions of the requested symbols are as follows:
+
+| Symbol     | Dimensions | 
+|------------|------------|
+| $\delta$ m | k x 1      |
+| $d$        | i x 1      |
+| $G$        | i x k      |
+| $G^T G$    | k x k      |
+| $G^T d$    | k x 1      |
+
+
+
+:::{.callout-note appearance="simple"}
+
+# Question 2c
+
+Compute δm using the formula above. What do you get, and why is this the case?
+:::
+
+The above operation isn't possible; the appropriate linear algebra inverse function
+raising an error stating that the matrix $G^T G$ is a singular matrix.
 
 
 # References
