@@ -1,0 +1,33 @@
+
+# --- Build system configuration
+
+[build-system]
+requires = [ "setuptools>=41",]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# --- Project Metadata
+
+[project]
+name = "raytape"
+version = "0.0.1"
+
+authors = [
+  { name="Derrick Chambers", email="chambers.ja.derrick@gmail.com" },
+]
+
+description = "A simple package for ray-tomography for FWI assignemnt 6"
+requires-python = ">=3.9"
+
+# --- Dependencies
+
+dependencies = [
+    "numpy >= 1.13.0",
+    "matplotlib",
+]
+
