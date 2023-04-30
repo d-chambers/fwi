@@ -14,25 +14,13 @@ output_path.mkdir(exist_ok=True)
 true_input = input_path / 'true'
 initial_input = input_path / 'initial'
 
-basic_plot_path = output_path / "a010_basic_plot.png"
-
-stream_plot_path = output_path / 'a030_stream_plot.png'
-gll_hist_plot = output_path / 'a030_gll_hist.png'
-
-
 true_workspace = output_path / 'a010_base_specfem'
 true_output = output_path / 'a010_true_output'
 
 initial_workspace = output_path / 'a020_initial_specfem'
 initial_output = output_path / 'a020_initial_output'
 
-modified_geometry = output_path / 'a040_modified_geometry.png'
 
-single_single_kernel_true_path = output_path / "a050_single_single_true"
-sing_single_geometry_path = output_path / "a050_single_single_geometry.png"
-single_single_kernel_initial_path = output_path / "a050_single_single_initial"
-adjoint_plot_path = output_path / "a050_adjoint_plot.png"
-sing_sing_banana_donut = output_path / "a050_sing_single_donut.png"
 
 # --- helper functions
 

@@ -1,8 +1,8 @@
 ---
-title: "GPGN 598A: Assignment #5"
-subtitle: Event Kernel
+title: "GPGN 598A: Final Project"
+subtitle: "Specster: a specfem/FWI harness"
 bibliography: references.bib
-date: 2023-03-23
+date: 2023-04-29
 author:
   - name: Derrick Chambers
     url: https://derchambers.com
@@ -22,207 +22,289 @@ header-includes:
  \usepackage{amsmath}
 ---
 
-# Abstract
-
-Monitoring induced seismicity at underground coal mines is notoriously difficult due
-to the complex, time-dependent velocity structure associated with sedimentary 
-environments. Although coal beds are known to be highly anisotropic, 
-the perturbations, in stress and density, caused by high-extraction mining methods is particularly
-challenging as they can systematically bias event locations. In this work, I examine the feasibility
-of using full waveform inversion (FWI) to invert for various velocity and density perturbations
-which could be induced by longwall mining in a 2D model.
-
-
 # Introduction
 
+This report is submitted in fulfillment of the term project for GPGN 598A: Full Waveform Inversion (FWI) taken at the Colorado School of Mines in spring of 2023. The assignment was to conduct a full waveform inversion in two dimensions. In order to learn the important implementation details of FWI workflows and the intricacies of SPECFEM2D, the wavefield solver, I opted to create a python package for conducting this project rather than using existing workflow solutions, such as [seisflows](https://github.com/adjtomo/seisflows). The python implementation is called [specster](https://github.com/d-chambers/specster) and it consists of nearly 2000 lines of python implementation code and 500 lines of test code (with several hundred tests in total). This report will highlight the use of the specster library in order to interact with SPECFEM2D and conduct a few iterations of FWI. 
 
-Coal seams can be very anisotropic (@gray2005seismic).
+# Installation
 
-# Simulation and Model Description
+Currently, specster can be installed from git using pip (provided
+git is installed)
 
-The same material properties and model grid was used from assignment 3.
-A few of the key parameters are shown in the following table, and the complete
-data inputs are attached to this report.
+```bash
+pip install git+https://github.com/d-chambers/specster
+```
 
+Next, you must set your environment variable "SPECFEM_BIN_PATH" and "SPECFEM2D_PATH" so specster can find specfem binaries and example directories respectively.
 
-|       Parameter        |     Value      | Units |
-|:----------------------:|:--------------:|:-----:|
-|        timestep        |       2        |  ms   |
-|   timesteping scheme   |    Newmark     |       |
-|          mode          |       SH       |       |
-|  x extents (min/max)   |    0 / 200     |  km   |
-|  z extents (min/max)   |     0 / 80     |  km   |
-| source location (x/z)  |  100.0 / 40.0  |  km   |
-|      source type       | vertical force |       |
 
+# Specfem interactions
 
-Absorbing boundary conditions are used for all sides.
+Specster interacts specfem 2D through a control class known as `Control2d`. `Control2d` provides several useful features to:
 
-:::{.note}
-For convenience, the source was placed in the center of the model.
-:::
+- Plot simulation geometries
+- Run meshing and simulations
+- Parse receivers and sources into tables
+- Changes simulation parameters
 
+Examples of these are presented in the following sections:
 
-## Material Properties
+## Control2D initialization 
 
-The 2D model is composed of one elastic material which has the following properties:
+There are three ways to initialize `Control2D` objects: 
 
+```python
+import specster as sp
 
+# loads the base example then copies files to temporary directory
+control_default = sp.Control2d().copy()
+# loads an example included in the specfem2D directory by name
+# and copies contents to a new path
+control_example = sp.load_2d_example("Tape2007")
+# or from your own directory which at least includes a DATA directory 
+# and parfile.
+control = sp.Control2d("path/to/your/file")
+```
 
-|   Material    | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
-|:-------------:|:-----------------------:|:-------------------:|:-------------------:|
-|   Coal (1)    |          1,400          |        2,300        |        1,100        |
-| Sandstone (2) |          2,500          |        3,000        |        1,400        |
-|   Shale (3)   |          2,500          |        1,800        |         800         |
-|   Soil (4)    |          2,000          |         700         |         300         |
+## Plotting simulation geometry
 
-: True Material Properties {#tbl-true-materials}
+Visualizing the station/source geometry and background models is useful to quickly understand the simulation. In specster this is easy:
 
-Material attenuation was disabled.
+```python
+import specster as sp
 
+# loads the base example then copies files to temporary directory
+# this is needed because the mesher may need to be run to generate models.
+control = sp.Control2d().copy()
+control.plot_geometry(kernel=['vs', 'vp'])  # plots VP and VS
+```
 
-## Boundary Conditions
+Sources are shown as red stars, receivers as triangles, and grid quantities (in this case P/S wave speed) are plotted in separated panels as in @fig-basic_geometry. 
 
-Perfectly Matched Layers (PML) boundary conditions with 3 element thickness on all
-sides. The attenuation parameters were left unchanged from the default
-parameters file. All four sides employed absorbing boundary conditions.
+![Basic geometry plot of default example](outputs/a010_basic_plot.png){#fig-basic_geometry}
 
+## Running a forward simulation and output inspection
 
-# Simulation Parameters
+Forward simulations are are conducted with the `Control2d.run` method. You will see the specfem2d piped to the terminal or notebook upon calling this method. 
 
-There were 25 nodes per element, corresponding to approximately 5 in each
-direction. However, since GLLs are not evenly spaced, the average spacing
-(as reported by SpecFEM2D) is 625m and the minimum spacing is 431m.
+`Control2d.run` is able to figure out which programs to run based on values in the par file. For example, if the par file specifies an external mesh is to be used, it will not run the meshing program.   
 
-The Cartesian simulation is run in P-SV mode rather than SH/membrane wave mode. 
+```python
+import shutil
+from pathlib import Path
 
-## CFL Stability
+import specster as sp
 
-The reported max CFL stability condition for this simulation is 0.27 which is less
-than the maximum recommended value of 0.5 so there shouldn't be any stability issues
-related to the CFL condition in this case.
+path = Path("outputs/run_example")
 
-## Wavelength Resolution
+if path.is_dir():
+    shutil.rmtree(path)
 
-SpecFEM2D recommends an average number of GLLs per wavelength of 4.5 for S waves and
-5.5 for P waves. This constraint is, of course, governed by the mesh spacing
-and the lowest material velocity.
+# prepare control for forward simulation
+control = (
+    sp.Control2d()
+    .copy(path)  # make copy to path
+    .prepare_fwi_forward()  # set params to forward mode
+)
 
-The minimum number of GLLs per s-wave is 4.83, which is above the recommend value of 4.5
-so there shouldn't be any resolution issues. All elements are in solid regions.
+output = control.run()
+```
+The resulting object
+Now we can get the resulting waveforms as an [obspy.Stream](https://docs.obspy.org/packages/autogen/obspy.core.stream.Stream.html) object (@fig-stream_plot).
 
+```python
+st = output.get_waveforms()  # get obspy streams
+st.select(component='Z')[:3].plot()  # plot first 3
+```
 
 
-## Station Distribution
+![Plot of output streams](outputs/a030_stream_plot.png){#fig-stream_plot fig-height=.5%}
 
-Stations were embedded in the media from 10km to 200km in increments of 10km in the X
-direction and from 10km to 70km in the Z direction, thus forming a grid of 132 stations.
 
+We can also get important result parameters from the output object that let us know the health of the simulation.
 
-## Initial model
 
-The initial model is the base model with the S wave velocity decreased by about 2.5%.
+```python
+stats = output.stats  # get obspy streams
+stats.elements  # number of elements
+stats.max_frequency_resolved  # the maximum freq form the source
+stats.min_gll_distance  # min spacing of GLL points
+stats.max_cfl  # max clf ratio. Should be less than 0.5 or so.
+```
 
-| Material  | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
-|:---------:|:-----------------------:|:-------------------:|:-------------------:|
-|     1     |          2,600          |        5,800        |        3,120        |
+We can also get a histogram of the number of GLL points per the shortest wavelengths for the different regions in the model (@fig-gll_hists)
 
-: Initial Material Properties {#tbl-initial-materials}
+```python
+output.plot_gll_per_wavelength_histogram()
+```
 
-# Procedure
+![GLL per wavelength histograms](outputs/a030_gll_hist.png){#fig-gll_hists}
 
-To obtain the sensitivity kernels, the following procedure is employed:
 
-1. Run forward simulation with the true model and store associated seismograms
-2. Run forward simulation with the initial model and store associated seismograms/last frame of the wavefield
-3. Calculate misfit between waveforms produced by the true and initial models and associated adjoint sources
-4. Run adjoint simulation and visualize the associated (raw) kernels
-5. Apply a minimum windowing algorithm to raw kernels to mute affect of station/sources  
-6. Visualize raw and muted kernels
-7. 
-The procedure is carried out for the entire waveform window for each station.
-The misfit functions used are described in the following sections.
+# Modifying stations and sources
 
+Stations and sources can be modified directly through the `station` and `sources` parameter. Here are a few examples:
 
-## Waveform pre-processing
+Make a copy, remove all but one station, add another source, and plot geometry (@fig-modified_geometry). 
 
-The maximum frequencies resolvable by the model is 1.02 Hz, so a low-pass filter is applied
-at this frequency. The waveforms are also detrended using a linear fit
-and tapered with a Han window with a maximum percentage of %5 using the functionality provided
-by the ObsPy package [@beyreuther2010obspy].
+```python
+control = control.copy()
 
-This preprocessing of waveforms is applied before calculating misfit functions and adjoint sources.
+control.stations = control.stations[:1]
 
+new_source = control.sources[0].copy()
+new_source.xs, new_source.zs = 1500, 1500
+control.sources.append(new_source)
 
-## Waveform Misfit
+control.write(overwrite=True)
 
-The waveform misfit is defined as [@bozdaug2011misfit]:
+control.plot_geometry(kernel=['vs', 'vp'])
+```
 
-$$
-    \chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N 
-    \int_0^T\left\|\mathbf{d}\left(\mathbf{x}_r, t\right)
-    -\mathbf{s}\left(\mathbf{x}_r, t, \mathbf{m}\right)\right\|^2 
-    \mathrm{~d} t
-$${#eq-wf-misfit}
+![Modified geometry](outputs/a040_modified_geometry.png){#fig-modified_geometry}
 
-and the adjoint source as:
 
-$$
-    f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N \frac{1}{M_r}\left[d_i\left(\mathbf{x}_r, T-t\right)
-    -s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right)\right] w_r(T-t) 
-    \delta\left(\mathbf{x}-\mathbf{x}_r\right)
-$${#eq-wf-adjoint}
+Now plot the geo
 
+Add an extra source
 
-## Traveltime Misfit
 
-The cross-correlation traveltime misfit is defined as [@bozdaug2011misfit]:
 
-$$
-\chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N\left[T_r^{\mathrm{obs}}-T_r(\mathbf{m})\right]^2
-$${#eq-tt-misfit}
 
-and the adjoint source as:
 
-$$
-f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N\left[T_r^{\mathrm{obs}}-T_r(\mathbf{m})\right] \frac{1}{N_r} w_r(T-t) \partial_t s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right) \delta\left(\mathbf{x}-\mathbf{x}_r\right)
-$${#eq-tt-adjoint}
+# Low level modifications
 
+For many use cases, users shouldn't have to modify the parameters contained in the specfem par_file directory. However, then these do need to be modified, this is done through the `par` attribute of `Control2d`. `par` is a hierarchy of [pydantic models](https://docs.pydantic.dev/latest/usage/models/) which matches the structure of the par file. They also validate inputs to help prevent producing an invalid par_file. For example:
 
-# Results
+```python
+# dt must be a float so this doesn't work
+control.par.dt = "bob"
+# but strings that can be converted to floats do work
+control.par.dt = "0.1"
+```
 
-The following figures show the raw and muted waveform misfit event kernels:
+Switch from P/SV mode to SH:
 
-![Waveform raw kernel](outputs/a060_kernel_plots/waveform_raw.png){#fig-wf-raw}
+```python
+control.par.p_sv = False
+```
 
-![Waveform muted kernel](outputs/a060_kernel_plots/waveform_muted.png){#fig-wf-muted}
+Configure control to not output postscript files; they are too big!
 
-The following figures show the raw and muted travel-time misfit event kernels:
+```python
+control.par.visualizations.postscript.output_postscript_snapshot = False
+```
 
-![Travel time raw kernel](outputs/a060_kernel_plots/travel_time_raw.png){#fig-tt-raw}
+Once all changes have been made, we need to write the control state back to disk using the `Control2d.write` method.
 
-![Travel time muted kernel](outputs/a060_kernel_plots/travel_time_muted.png){#fig-tt-muted}
+```python
+# overwrite is true to replace existing par file.
+control.write(overwrite=True)
+```
+ 
+Of course, you can just modify the par_file directly in a text editor then 
+create a new `Control2d` object to update the state. 
 
 
-# Discussion
+# Full Waveform Inversion
 
-The waveform misfit kernel is much more effected by high amplitude values at the source 
-location than the travel time misfit kernels. For example, comparing figure @fig-wf-raw with
-@fig-wf-muted, until the source region is muted, its high amplitude completely dominates
-the kernel image. For the travel time misfit kernel, however, both the source and receiver
-have significant amplitudes (compare @fig-tt-raw, which has clear station imprints, to 
-@fig-tt-muted). 
+Specster provides a few different abstraction levels for performing full waveform inversion. Using `Control2d` directly would be the lowest level of abstraction, but it will be informative to see how this is done before moving to higher abstraction levels. 
 
-In both cases, the kernel highlight the nature of the vertical force; most S energy is
-generated perpendicular to the source axis (positive Z) and less energy above and below 
-the source, though this source preference is most pronounced in the travel time misfit 
-kernels.
+## Single event-station kernel calculation
 
+The following shows how to calculate and visualize a single event kernel and a single station with Specster. 
 
-# Supplemental Materials
+The first step is to create the base geometry. We will simply use a homogeneous model  so this document is completely reproducible without any external files and the results are easily interpretable. 
 
-The python code used to run specfem, calculate misfits and adjoint sources, as well as
-visualize the kernels is submitted with this report in Canvas. The base specfem parameter
-file is also included.
+First, setup the control structure and run forward for our "true" model. 
+
+```python
+import specster as sp
+
+control_true = sp.load_2d_example('homogeneous_2d').copy("outputs/kernel_one_one_true")
+
+control_true.stations = control_true.stations[:1]
+control_true.prepare_fwi_forward()
+control_true.run()
+```
+
+![](outputs/a050_single_single_geometry.png)
+
+Next, we setup our initial model by modifying the velocity. 
+
+```python
+control_initial = control_true.copy("outputs/kernel_one_one_true")
+
+control_initial.par.material_models.models[0].vs *= 0.98
+control_initial.prepare_fwi_forward()
+control_initial.run()
+```
+
+Next, use the misfit classes form the FWI module to calculate the misfit and adjoint sources. We will simply use the waveform misfit but travel time and amplitude misfit functions are also implemented. Then we run the initial control in fwi_adjoint mode. 
+
+
+```python
+from specster.fwi.misfit import WaveformMisFit
+
+# load seismograms as Streams
+st_true = control_true.output.get_waveforms()
+st_initial = control_initial.output.get_waveforms()
+
+# calculate adjoint source
+misfitter = WaveformMisFit(st_true, st_initial)
+adjoint_source = misfitter.get_adjoint_sources()
+adjoint_source.plot()
+
+# write adjoints to initial and run
+control_initial.write_adjoint_sources(adjoint_source)
+control_initial.prepare_fwi_adjoint()
+control_initial.run()
+```
+
+![Adjoint source example](outputs/a050_adjoint_plot.png){#fig-simple_adjoint}
+
+Finally, we load the kernel and plot.
+
+
+```python
+output = control_initial.output
+
+kernel = load_event_kernel()
+output
+from specster.fwi.misfit import WaveformMisFit
+
+# load seismograms as Streams
+st_true = control_true.output.get_waveforms()
+st_initial = control_initial.output.get_waveforms()
+
+# calculate adjoint source
+misfitter = WaveformMisFit(st_true, st_initial)
+adjoint_source = misfitter.get_adjoint_sources()
+
+# write adjoints to initial and run
+control_initial.write_adjoint_sources(adjoint_source)
+control_initial.prepare_fwi_adjoint()
+control_initial.run()
+```
+
+Now we can plot the banana donut.
+
+```python
+output = control_initial.output
+output.plot_kernel(kernel='beta')
+```
+
+![](outputs/a050_sing_single_donut.png)
+
+This exercise could, of course, be repeated for multiple stations, but the workflow is identical. Things get more interesting in more realistic cases involving multiple stations and multiple events. 
+
+## Multiple Events and Multiple Stations
+
+
+
+
+
+
+
 
 # References

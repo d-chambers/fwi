@@ -1,0 +1,228 @@
+---
+title: "GPGN 598A: Assignment #5"
+subtitle: Event Kernel
+bibliography: references.bib
+date: 2023-03-23
+author:
+  - name: Derrick Chambers
+    url: https://derchambers.com
+    affiliation: Colorado School of Mines
+    affiliation-url: https://mines.edu
+
+format:
+  pdf:
+    # toc: true
+    # toc-depth: 1
+    number-sections: true
+    colorlinks: true
+header-includes:
+ \usepackage{wrapfig}
+ \usepackage{float}
+ \floatplacement{figure}{H}
+ \usepackage{amsmath}
+---
+
+# Abstract
+
+Monitoring induced seismicity at underground coal mines is notoriously difficult due
+to the complex, time-dependent velocity structure associated with sedimentary 
+environments. Although coal beds are known to be highly anisotropic, 
+the perturbations, in stress and density, caused by high-extraction mining methods is particularly
+challenging as they can systematically bias event locations. In this work, I examine the feasibility
+of using full waveform inversion (FWI) to invert for various velocity and density perturbations
+which could be induced by longwall mining in a 2D model.
+
+
+# Introduction
+
+
+Coal seams can be very anisotropic (@gray2005seismic).
+
+# Simulation and Model Description
+
+The same material properties and model grid was used from assignment 3.
+A few of the key parameters are shown in the following table, and the complete
+data inputs are attached to this report.
+
+
+|       Parameter        |     Value      | Units |
+|:----------------------:|:--------------:|:-----:|
+|        timestep        |       2        |  ms   |
+|   timesteping scheme   |    Newmark     |       |
+|          mode          |       SH       |       |
+|  x extents (min/max)   |    0 / 200     |  km   |
+|  z extents (min/max)   |     0 / 80     |  km   |
+| source location (x/z)  |  100.0 / 40.0  |  km   |
+|      source type       | vertical force |       |
+
+
+Absorbing boundary conditions are used for all sides.
+
+:::{.note}
+For convenience, the source was placed in the center of the model.
+:::
+
+
+## Material Properties
+
+The 2D model is composed of one elastic material which has the following properties:
+
+
+
+|   Material    | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
+|:-------------:|:-----------------------:|:-------------------:|:-------------------:|
+|   Coal (1)    |          1,400          |        2,300        |        1,100        |
+| Sandstone (2) |          2,500          |        3,000        |        1,400        |
+|   Shale (3)   |          2,500          |        1,800        |         800         |
+|   Soil (4)    |          2,000          |         700         |         300         |
+
+: True Material Properties {#tbl-true-materials}
+
+Material attenuation was disabled.
+
+
+## Boundary Conditions
+
+Perfectly Matched Layers (PML) boundary conditions with 3 element thickness on all
+sides. The attenuation parameters were left unchanged from the default
+parameters file. All four sides employed absorbing boundary conditions.
+
+
+# Simulation Parameters
+
+There were 25 nodes per element, corresponding to approximately 5 in each
+direction. However, since GLLs are not evenly spaced, the average spacing
+(as reported by SpecFEM2D) is 625m and the minimum spacing is 431m.
+
+The Cartesian simulation is run in P-SV mode rather than SH/membrane wave mode. 
+
+## CFL Stability
+
+The reported max CFL stability condition for this simulation is 0.27 which is less
+than the maximum recommended value of 0.5 so there shouldn't be any stability issues
+related to the CFL condition in this case.
+
+## Wavelength Resolution
+
+SpecFEM2D recommends an average number of GLLs per wavelength of 4.5 for S waves and
+5.5 for P waves. This constraint is, of course, governed by the mesh spacing
+and the lowest material velocity.
+
+The minimum number of GLLs per s-wave is 4.83, which is above the recommend value of 4.5
+so there shouldn't be any resolution issues. All elements are in solid regions.
+
+
+
+## Station Distribution
+
+Stations were embedded in the media from 10km to 200km in increments of 10km in the X
+direction and from 10km to 70km in the Z direction, thus forming a grid of 132 stations.
+
+
+## Initial model
+
+The initial model is the base model with the S wave velocity decreased by about 2.5%.
+
+| Material  | $\rho (\frac{kg}{m^3})$ | $V_p (\frac{m}{s})$ | $V_s (\frac{m}{s})$ |
+|:---------:|:-----------------------:|:-------------------:|:-------------------:|
+|     1     |          2,600          |        5,800        |        3,120        |
+
+: Initial Material Properties {#tbl-initial-materials}
+
+# Procedure
+
+To obtain the sensitivity kernels, the following procedure is employed:
+
+1. Run forward simulation with the true model and store associated seismograms
+2. Run forward simulation with the initial model and store associated seismograms/last frame of the wavefield
+3. Calculate misfit between waveforms produced by the true and initial models and associated adjoint sources
+4. Run adjoint simulation and visualize the associated (raw) kernels
+5. Apply a minimum windowing algorithm to raw kernels to mute affect of station/sources  
+6. Visualize raw and muted kernels
+7. 
+The procedure is carried out for the entire waveform window for each station.
+The misfit functions used are described in the following sections.
+
+
+## Waveform pre-processing
+
+The maximum frequencies resolvable by the model is 1.02 Hz, so a low-pass filter is applied
+at this frequency. The waveforms are also detrended using a linear fit
+and tapered with a Han window with a maximum percentage of %5 using the functionality provided
+by the ObsPy package [@beyreuther2010obspy].
+
+This preprocessing of waveforms is applied before calculating misfit functions and adjoint sources.
+
+
+## Waveform Misfit
+
+The waveform misfit is defined as [@bozdaug2011misfit]:
+
+$$
+    \chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N 
+    \int_0^T\left\|\mathbf{d}\left(\mathbf{x}_r, t\right)
+    -\mathbf{s}\left(\mathbf{x}_r, t, \mathbf{m}\right)\right\|^2 
+    \mathrm{~d} t
+$${#eq-wf-misfit}
+
+and the adjoint source as:
+
+$$
+    f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N \frac{1}{M_r}\left[d_i\left(\mathbf{x}_r, T-t\right)
+    -s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right)\right] w_r(T-t) 
+    \delta\left(\mathbf{x}-\mathbf{x}_r\right)
+$${#eq-wf-adjoint}
+
+
+## Traveltime Misfit
+
+The cross-correlation traveltime misfit is defined as [@bozdaug2011misfit]:
+
+$$
+\chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N\left[T_r^{\mathrm{obs}}-T_r(\mathbf{m})\right]^2
+$${#eq-tt-misfit}
+
+and the adjoint source as:
+
+$$
+f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N\left[T_r^{\mathrm{obs}}-T_r(\mathbf{m})\right] \frac{1}{N_r} w_r(T-t) \partial_t s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right) \delta\left(\mathbf{x}-\mathbf{x}_r\right)
+$${#eq-tt-adjoint}
+
+
+# Results
+
+The following figures show the raw and muted waveform misfit event kernels:
+
+![Waveform raw kernel](outputs/a060_kernel_plots/waveform_raw.png){#fig-wf-raw}
+
+![Waveform muted kernel](outputs/a060_kernel_plots/waveform_muted.png){#fig-wf-muted}
+
+The following figures show the raw and muted travel-time misfit event kernels:
+
+![Travel time raw kernel](outputs/a060_kernel_plots/travel_time_raw.png){#fig-tt-raw}
+
+![Travel time muted kernel](outputs/a060_kernel_plots/travel_time_muted.png){#fig-tt-muted}
+
+
+# Discussion
+
+The waveform misfit kernel is much more effected by high amplitude values at the source 
+location than the travel time misfit kernels. For example, comparing figure @fig-wf-raw with
+@fig-wf-muted, until the source region is muted, its high amplitude completely dominates
+the kernel image. For the travel time misfit kernel, however, both the source and receiver
+have significant amplitudes (compare @fig-tt-raw, which has clear station imprints, to 
+@fig-tt-muted). 
+
+In both cases, the kernel highlight the nature of the vertical force; most S energy is
+generated perpendicular to the source axis (positive Z) and less energy above and below 
+the source, though this source preference is most pronounced in the travel time misfit 
+kernels.
+
+
+# Supplemental Materials
+
+The python code used to run specfem, calculate misfits and adjoint sources, as well as
+visualize the kernels is submitted with this report in Canvas. The base specfem parameter
+file is also included.
+
+# References

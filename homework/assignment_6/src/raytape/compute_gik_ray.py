@@ -1,14 +1,12 @@
 """
 Module for computing G_{ik}.
 """
-from pathlib import Path
 
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 
-from raytape.utils import get_waypoints, get_distance, get_distances
 from raytape.spline import spline_vals
+from raytape.utils import get_waypoints, get_distances
 
 
 def _get_ray_points(slats, slons, rlats, rlons, npts):
