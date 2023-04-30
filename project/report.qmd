@@ -114,7 +114,7 @@ Now we can get the resulting waveforms as an [obspy.Stream](https://docs.obspy.o
 
 ```python
 st = output.get_waveforms()  # get obspy streams
-st.select(component='Z')[:3].plot()  # plot first 3
+st.select(component='Z')[:3].plot()  # plot first 3 streams
 ```
 
 
@@ -300,6 +300,67 @@ This exercise could, of course, be repeated for multiple stations, but the workf
 
 ## Multiple Events and Multiple Stations
 
+First, I will demonstrate a multi-event multi-station workflow. One simple case is to use a nearly homogeneous velocity model with a small inclusion in the center and very good coverage of events and stations. Specster's "inclusion_2d" dataset was created for this purpose.
+
+
+```python
+import specster as sp
+
+control_true = sp.load_2d_example("inclusion_2d").copy("out/inclusion_2d_path")
+control_true.plot_geometry(kernel='vs')
+```
+
+![](outputs/a060_inclusion_geometry.png)
+
+
+Next, we need to split each source into a separate run (because I am not attempting source encoding). Fortunately, all of these runs are done in parallel using python's multiprocessing functionality. In the future it could be simplified even more to just make asynchronous command line calls.
+
+```python
+control_true.run_each_source()
+```
+
+This will create a directory called "EACH_SOURCE" and populate it with copies of the specfem DATA directories although each has been modified to only include one source. The source directories are simply numbered sequentially starting with "000000".
+
+These will represent our "True" waveforms. Of course, we also need an initial model and data. For this, we will start with a homogenous background model.
+```python
+import specster as sp
+
+control_initial = control_true.copy("out/inclusion_2d_initial")
+
+# modify the second material property to match first. Homogenizes the model. 
+models = control_initial.par.material_models.models
+models[1].Vs = models[0].Vs
+models[1].Vp = models[0].Vp
+models[1].rho = models[0].rho
+
+control_initial.write(overwrite=True)
+fig, *_ = control_initial.plot_geometry(kernel='vs')
+
+```
+
+![](outputs/a062_inclusion_geometry.png)
+
+
+
+It will then get tedious to work with multiple `Control2d` objects for each event, but Specster provides a higher level control class for facilitating the FWI workflow.
+
+```python
+import specster as sp
+from specster.fwi.misfit import WaveformMisFit
+
+inverter = sp.Inverter(
+    # Specifies where true data are found
+    observed_data_path=control_true.each_source_path,
+    # The initial control is used to setup the inversion
+    control=control_initial,
+    # A "true" control object is needed to compare model misfit
+    true_control=control_true,  
+    # The working_path optionally specifies where the inverter does its work
+    working_path="outputs/fwi_inclusion_2d",
+    # specifies the misfit function.
+    misfit=WaveformMisFit,
+)
+```
 
 
 

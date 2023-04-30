@@ -34,6 +34,14 @@ single_single_kernel_initial_path = output_path / "a050_single_single_initial"
 adjoint_plot_path = output_path / "a050_adjoint_plot.png"
 sing_sing_banana_donut = output_path / "a050_sing_single_donut.png"
 
+inclusion_2d_true_path = output_path / 'a060_inclusion_2d_true'
+inclusion_true_geometry_path = output_path / 'a060_inclusion_geometry.png'
+
+inclusion_2d_initial_path = output_path / 'a062_inclusion_2d_initial'
+inclusion_initial_geometry_path = output_path / 'a062_inclusion_geometry.png'
+
+fwi_work_path = output_path / "a064_fwi_workpath"
+
 # --- helper functions
 
 def get_preprocessing_func(output):
