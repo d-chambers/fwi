@@ -2,9 +2,8 @@
 Script to compute G.
 """
 
-import numpy as np
-
 import local
+import numpy as np
 from raytape.compute_gik_ray import calc_G
 
 if __name__ == "__main__":
@@ -14,8 +13,15 @@ if __name__ == "__main__":
     velocity = 3500
 
     out = calc_G(
-        data.slats, data.slons, data.rlats, data.rlons, data.qlats, data.qlons, velocity,
-        npts=1000, scale=8,
+        data.slats,
+        data.slons,
+        data.rlats,
+        data.rlons,
+        data.qlats,
+        data.qlons,
+        velocity,
+        npts=1000,
+        scale=8,
     )
 
     np.save("outputs/G.npy", out)

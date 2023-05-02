@@ -31,20 +31,20 @@ The purpose of this assignment is to reproduce the simple SH example in @tromp20
 
 As we discussed during the class last week please extend previous assignment toward computing an event kernel:
 
-First, compute S and SS kernels by mimicking the 2D example given in Tromp et al. 2005. 
+First, compute S and SS kernels by mimicking the 2D example given in Tromp et al. 2005.
 Use SPECFEM2D in the SH mode for a homogeneous model and compute S and SS kernels together using;
 
 a) cross-correlation traveltime kernels (note that you need to window S and SS waves separately),
-b) waveform misfit (use the same windows you use for traveltime kernels, also use one big window 
+b) waveform misfit (use the same windows you use for traveltime kernels, also use one big window
 to observe the window effect on measurements).
 
 
 # Simulation and Model Description
 
 In order to understand the kernels in the simplest cases, a 2D homogenous model
-was selected with a single source and a single receiver. The model is based on 
+was selected with a single source and a single receiver. The model is based on
 the first example in @tromp2005seismic, but some parameters were altered slightly
-or estimated if not provided in the paper. A few of the key parameters are shown in 
+or estimated if not provided in the paper. A few of the key parameters are shown in
 the following table, and the complete data inputs are attached to this report.
 
 
@@ -91,7 +91,7 @@ There were 25 nodes per element, corresponding to approximately 5 in each
 direction. However, since GLLs are not evenly spaced, the average spacing
 (as reported by SpecFEM2D) is 625m and the minimum spacing is 431m.
 
-The Cartesian simulation is run in P-SV mode rather than SH/membrane wave mode. 
+The Cartesian simulation is run in P-SV mode rather than SH/membrane wave mode.
 
 ## CFL Stability
 
@@ -147,9 +147,9 @@ waveform for each misfit function highlighted in the next section.
 The waveform misfit is defined as [@bozdaug2011misfit]:
 
 $$
-    \chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N 
+    \chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N
     \int_0^T\left\|\mathbf{d}\left(\mathbf{x}_r, t\right)
-    -\mathbf{s}\left(\mathbf{x}_r, t, \mathbf{m}\right)\right\|^2 
+    -\mathbf{s}\left(\mathbf{x}_r, t, \mathbf{m}\right)\right\|^2
     \mathrm{~d} t
 $${#eq-wf-misfit}
 
@@ -157,7 +157,7 @@ and the adjoint source as:
 
 $$
     f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N \frac{1}{M_r}\left[d_i\left(\mathbf{x}_r, T-t\right)
-    -s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right)\right] w_r(T-t) 
+    -s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right)\right] w_r(T-t)
     \delta\left(\mathbf{x}-\mathbf{x}_r\right)
 $${#eq-wf-adjoint}
 
@@ -228,14 +228,14 @@ reflections from the imperfect boundaries on the right/left sides, or perhaps
 some data processing artefact. However, these also occur in the figures presented
 by @tromp2005seismic so it is not an issue unique to this implementation.
 
-The benefits of windowing here are well illustrated by comparing the whole waveform 
-kernels with the windowed kernels; smaller phases, such as SS, receive less weight 
+The benefits of windowing here are well illustrated by comparing the whole waveform
+kernels with the windowed kernels; smaller phases, such as SS, receive less weight
 and thus appear fainter in @fig-tt-whole and @fig-wf-whole than when seperated into
-their own kernels. The difference in kernel amplitude is more pronounced for the 
-waveform kernels, but also appears in the travel time kernels. If the difference in 
-energy were even greater, this emphasis and de-emphasis would be even greater, 
-leading the higher amplitude waves to dominate the kernels. Of cousre, and 
-especially in real-world data that can be dominated by surface waves, this is often 
+their own kernels. The difference in kernel amplitude is more pronounced for the
+waveform kernels, but also appears in the travel time kernels. If the difference in
+energy were even greater, this emphasis and de-emphasis would be even greater,
+leading the higher amplitude waves to dominate the kernels. Of cousre, and
+especially in real-world data that can be dominated by surface waves, this is often
 not desirable, hence the need for windowing.
 
 

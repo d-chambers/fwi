@@ -1,4 +1,4 @@
-% 
+%
 % colors.m
 % Carl Tape 01-Dec-2002
 % printed xxx

@@ -2,12 +2,10 @@
 Get adjoint source for a variety of misfits.
 """
 
-import obspy
-
-import specster as sp
-from specster.fwi.misfit import WaveformMisFit, TravelTimeMisFit
-
 import local
+import obspy
+import specster as sp
+from specster.fwi.misfit import TravelTimeMisFit, WaveformMisFit
 
 misfits = {
     "waveform": WaveformMisFit,
@@ -27,4 +25,4 @@ if __name__ == "__main__":
         adjoints = pre_proc(adjoint_raw)
         base_path = local.wf_adjoint_sources / f"{misfit_name}.mseed"
         base_path.parent.mkdir(exist_ok=True, parents=True)
-        adjoints.write(base_path, 'mseed')
+        adjoints.write(base_path, "mseed")

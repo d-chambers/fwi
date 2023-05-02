@@ -6,7 +6,6 @@ import local
 from misfit import WaveformMisFit
 from misfit_kernel import KernelKeeper
 
-
 if __name__ == "__main__":
     ws = local.get_workspace()
     local.reset_output_to_initial(ws)
@@ -28,4 +27,3 @@ if __name__ == "__main__":
         receivers=[local.station_location],
     )
     fig, _ = keeper.plot(out_file=local.wf_kernel_plot, scale=0.01)
-

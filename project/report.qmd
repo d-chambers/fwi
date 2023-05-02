@@ -24,44 +24,43 @@ header-includes:
 
 # Introduction
 
-This report is submitted in fulfillment of the term project for GPGN 598A: Full Waveform Inversion (FWI) taken at the Colorado School of Mines in spring of 2023. The assignment was to conduct a full waveform inversion in two dimensions. In order to learn the important implementation details of FWI workflows and the intricacies of SPECFEM2D, the wavefield solver, I opted to create a python package for conducting this project rather than using existing workflow solutions, such as [seisflows](https://github.com/adjtomo/seisflows). The python implementation is called [specster](https://github.com/d-chambers/specster) and it consists of nearly 2000 lines of python implementation code and 500 lines of test code (with several hundred tests in total). This report will highlight the use of the specster library in order to interact with SPECFEM2D and conduct a few iterations of FWI. 
+This report is submitted in fulfillment of the term project for GPGN 598A: Full Waveform Inversion (FWI) taken at the Colorado School of Mines in spring of 2023. In order to learn the important implementation details of FWI workflows and the intricacies of Specfem2D, which I used as the wavefield solver, I opted to create a python package for conducting this project rather than using existing workflow solutions, such as [seisflows](https://github.com/adjtomo/seisflows). The python implementation is called [specster](https://github.com/d-chambers/specster) and it consists of nearly 2000 lines of python implementation code and 500 lines of test code (with several hundred tests in total). This report will highlight the use of the specster library in order to interact with Specfem2D and conduct a few iterations of a simple FWI. This package may be useful to other students in the future, but currently it is only a prototype which will required additional work before it is "production-grade."
 
 # Installation
 
-Currently, specster can be installed from git using pip (provided
-git is installed)
+Specster can be installed from git using pip (provided git is installed)
 
 ```bash
 pip install git+https://github.com/d-chambers/specster
 ```
 
-Next, you must set your environment variable "SPECFEM_BIN_PATH" and "SPECFEM2D_PATH" so specster can find specfem binaries and example directories respectively.
+Next, the environment variable "SPECFEM_BIN_PATH" and "SPECFEM2D_PATH" must be set so specster can find specfem binaries and example directories, respectively. This can be done in one of the RC scripts to avoid manually setting these each time Specster is used.
 
 
 # Specfem interactions
 
 Specster interacts specfem 2D through a control class known as `Control2d`. `Control2d` provides several useful features to:
 
-- Plot simulation geometries
+- Plot experiment geometries
 - Run meshing and simulations
-- Parse receivers and sources into tables
-- Changes simulation parameters
+- Parse receivers and sources into tables (dataframes)
+- Change simulation parameters
 
-Examples of these are presented in the following sections:
+Examples of these are presented in the following sections.
 
-## Control2D initialization 
+## Control2D initialization
 
-There are three ways to initialize `Control2D` objects: 
+There are three ways to initialize `Control2D` objects:
 
 ```python
 import specster as sp
 
-# loads the base example then copies files to temporary directory
+# Load the base example then copies files to temporary directory
 control_default = sp.Control2d().copy()
 # loads an example included in the specfem2D directory by name
-# and copies contents to a new path
+# or in the specster data directory and copies to a temp directory
 control_example = sp.load_2d_example("Tape2007")
-# or from your own directory which at least includes a DATA directory 
+# Loads a specfem directory from a path (at least includes a DATA sub-directory)
 # and parfile.
 control = sp.Control2d("path/to/your/file")
 ```
@@ -79,15 +78,15 @@ control = sp.Control2d().copy()
 control.plot_geometry(kernel=['vs', 'vp'])  # plots VP and VS
 ```
 
-Sources are shown as red stars, receivers as triangles, and grid quantities (in this case P/S wave speed) are plotted in separated panels as in @fig-basic_geometry. 
+Sources are shown as red stars, receivers as triangles, and grid quantities (in this case P/S wave speed) are plotted in separated panels.
 
-![Basic geometry plot of default example](outputs/a010_basic_plot.png){#fig-basic_geometry}
+![Basic geometry plot of default example](outputs/a010_basic_plot.png)
 
 ## Running a forward simulation and output inspection
 
-Forward simulations are are conducted with the `Control2d.run` method. You will see the specfem2d piped to the terminal or notebook upon calling this method. 
+Forward simulations are run with the `Control2d.run` method. You will see the Specfem2d piped to the terminal or notebook upon calling this method.
 
-`Control2d.run` is able to figure out which programs to run based on values in the par file. For example, if the par file specifies an external mesh is to be used, it will not run the meshing program.   
+`Control2d.run` is able to figure out which programs to run based on values in the par file. For example, if the par file specifies an external mesh, it will not run the meshing program.
 
 ```python
 import shutil
@@ -100,17 +99,16 @@ path = Path("outputs/run_example")
 if path.is_dir():
     shutil.rmtree(path)
 
-# prepare control for forward simulation
 control = (
-    sp.Control2d()
+    sp.Control2d()  # default example
     .copy(path)  # make copy to path
     .prepare_fwi_forward()  # set params to forward mode
 )
 
 output = control.run()
 ```
-The resulting object
-Now we can get the resulting waveforms as an [obspy.Stream](https://docs.obspy.org/packages/autogen/obspy.core.stream.Stream.html) object (@fig-stream_plot).
+
+The outputs of the runs are accessed via the `output` parameter which is a `Output2D` object. `Output2D` has many useful methods for accessing information about the run results. For example, `output.get_waveforms` loades the resulting waveforms  as an [obspy.Stream](https://docs.obspy.org/packages/autogen/obspy.core.stream.Stream.html) object.
 
 ```python
 st = output.get_waveforms()  # get obspy streams
@@ -118,11 +116,10 @@ st.select(component='Z')[:3].plot()  # plot first 3 streams
 ```
 
 
-![Plot of output streams](outputs/a030_stream_plot.png){#fig-stream_plot fig-height=.5%}
+![Plot of output streams](outputs/a030_stream_plot.png){fig-height=.5%}
 
 
-We can also get important result parameters from the output object that let us know the health of the simulation.
-
+`Output2d` also contains important summary parameters that may help assess the health of the simulation:
 
 ```python
 stats = output.stats  # get obspy streams
@@ -132,20 +129,20 @@ stats.min_gll_distance  # min spacing of GLL points
 stats.max_cfl  # max clf ratio. Should be less than 0.5 or so.
 ```
 
-We can also get a histogram of the number of GLL points per the shortest wavelengths for the different regions in the model (@fig-gll_hists)
+Another useful plot is the number of GLL points per shortest wavelength for different regions of the model. This can be created by `Output2d` like so:
 
 ```python
 output.plot_gll_per_wavelength_histogram()
 ```
 
-![GLL per wavelength histograms](outputs/a030_gll_hist.png){#fig-gll_hists}
+![GLL per wavelength histograms](outputs/a030_gll_hist.png){}
 
 
 # Modifying stations and sources
 
-Stations and sources can be modified directly through the `station` and `sources` parameter. Here are a few examples:
+Stations and sources can be modified directly through the `station` and `sources` parameter, making it much more convenient to modify the experiment geometry than manually editing text files. Specster also provides some validation in this aspect to help reduce errors. Here are a few examples:
 
-Make a copy, remove all but one station, add another source, and plot geometry (@fig-modified_geometry). 
+Make a copy, remove all but one station, add another source, and plot geometry (@fig-modified_geometry).
 
 ```python
 control = control.copy()
@@ -161,18 +158,10 @@ control.write(overwrite=True)
 control.plot_geometry(kernel=['vs', 'vp'])
 ```
 
-![Modified geometry](outputs/a040_modified_geometry.png){#fig-modified_geometry}
+![Modified geometry](outputs/a040_modified_geometry.png){}
 
 
-Now plot the geo
-
-Add an extra source
-
-
-
-
-
-# Low level modifications
+# Modifying the parfile 
 
 For many use cases, users shouldn't have to modify the parameters contained in the specfem par_file directory. However, then these do need to be modified, this is done through the `par` attribute of `Control2d`. `par` is a hierarchy of [pydantic models](https://docs.pydantic.dev/latest/usage/models/) which matches the structure of the par file. They also validate inputs to help prevent producing an invalid par_file. For example:
 
@@ -201,36 +190,87 @@ Once all changes have been made, we need to write the control state back to disk
 # overwrite is true to replace existing par file.
 control.write(overwrite=True)
 ```
- 
-Of course, you can just modify the par_file directly in a text editor then 
-create a new `Control2d` object to update the state. 
 
+Of course, you can just modify the par_file directly in a text editor then
+create a new `Control2d` object to update the state.
+
+
+# Updating the models
+
+## Parfile updates
+
+The material models of the simulation can be updated directly through Specfem2d's parfile. 
+
+```python
+import specster as sp
+
+control = sp.Control2d().copy()
+# double the velocities in the inclusion material
+control.par.material_models.models[3].Vp *= 2
+control.par.material_models.models[3].Vs *= 2
+control.write(overwrite=True)
+fig, ax = control.plot_geometry(kernel=('vp', 'vs'))
+```
+
+![Model update through par file](outputs/a042_material_modified.png)
+
+
+## Custom models
+
+Also important is the ability to enter custom models (which may be difficult to describe in a small number of materials in the par file).
+In this example a circular low P velocity zone is created in the center of the model, but the s wave velocity is left unchanged.
+
+```python
+import numpy as np
+import specster as sp
+
+control = sp.Control2d().copy()
+# get current material properties as a dataframe.
+# index is x/z coordinates and columns are material values.
+df = control.get_material_model_df()
+# get coords of each gll point and location of center
+coords = df.reset_index()[['x', 'z']].values
+center = np.mean(coords, axis=0)
+# find points which are within 500m of center
+distances = np.linalg.norm(coords - center, axis=1)
+in_distance = np.abs(distances) < 500
+# update P/S velocities by making points in distance 50% slower
+new_vp = df['vp'].values
+new_vp[in_distance] *= 0.5
+df['vp'] = new_vp
+# now set model and plot
+control.set_material_model_df(df)
+control.plot_geometry(kernel=('vp', 'vs'))
+```
+
+![Model update through material dataframe](outputs/a044_material_df_modified.png)
 
 # Full Waveform Inversion
 
-Specster provides a few different abstraction levels for performing full waveform inversion. Using `Control2d` directly would be the lowest level of abstraction, but it will be informative to see how this is done before moving to higher abstraction levels. 
+Specster provides a few different abstraction levels for performing full waveform inversion. Using `Control2d` directly is the lowest level of abstraction, but it is informative to see how this is done before moving to higher abstraction levels.
 
 ## Single event-station kernel calculation
 
-The following shows how to calculate and visualize a single event kernel and a single station with Specster. 
+This section shows how to calculate and visualize a single event kernel and a single station with Specster.
 
-The first step is to create the base geometry. We will simply use a homogeneous model  so this document is completely reproducible without any external files and the results are easily interpretable. 
+The first step is to create the base geometry. We will simply use a homogeneous model do the results are easily interpretable.
 
-First, setup the control structure and run forward for our "true" model. 
+First, setup the control structure and run forward for our "true" model.
 
 ```python
 import specster as sp
 
 control_true = sp.load_2d_example('homogeneous_2d').copy("outputs/kernel_one_one_true")
 
+# remove all but one station
 control_true.stations = control_true.stations[:1]
 control_true.prepare_fwi_forward()
 control_true.run()
 ```
 
-![](outputs/a050_single_single_geometry.png)
+![Homogenous model](outputs/a050_single_single_geometry.png)
 
-Next, we setup our initial model by modifying the velocity. 
+Next, we setup our initial model by modifying the velocity of the true model. Again, this is just a homogeneous background velocity model.
 
 ```python
 control_initial = control_true.copy("outputs/kernel_one_one_true")
@@ -240,7 +280,9 @@ control_initial.prepare_fwi_forward()
 control_initial.run()
 ```
 
-Next, use the misfit classes form the FWI module to calculate the misfit and adjoint sources. We will simply use the waveform misfit but travel time and amplitude misfit functions are also implemented. Then we run the initial control in fwi_adjoint mode. 
+Next, the misfit classes form the FWI are used to calculate the misfit and adjoint sources. We will simply use the waveform misfit but travel time and amplitude misfit functions are also implemented. 
+
+After this the adjoints are saved to disk and we run the initial control in fwi_adjoint mode.
 
 
 ```python
@@ -261,16 +303,12 @@ control_initial.prepare_fwi_adjoint()
 control_initial.run()
 ```
 
-![Adjoint source example](outputs/a050_adjoint_plot.png){#fig-simple_adjoint}
+![Adjoint source example](outputs/a050_adjoint_plot.png){}
 
 Finally, we load the kernel and plot.
 
 
 ```python
-output = control_initial.output
-
-kernel = load_event_kernel()
-output
 from specster.fwi.misfit import WaveformMisFit
 
 # load seismograms as Streams
@@ -294,14 +332,13 @@ output = control_initial.output
 output.plot_kernel(kernel='beta')
 ```
 
-![](outputs/a050_sing_single_donut.png)
+![Single station/source kernel](outputs/a050_sing_single_donut.png)
 
-This exercise could, of course, be repeated for multiple stations, but the workflow is identical. Things get more interesting in more realistic cases involving multiple stations and multiple events. 
+This exercise could, of course, be repeated for multiple stations, but the workflow is identical. Things get more interesting in more realistic cases involving multiple stations and multiple events.
 
 ## Multiple Events and Multiple Stations
 
 First, I will demonstrate a multi-event multi-station workflow. One simple case is to use a nearly homogeneous velocity model with a small inclusion in the center and very good coverage of events and stations. Specster's "inclusion_2d" dataset was created for this purpose.
-
 
 ```python
 import specster as sp
@@ -310,10 +347,9 @@ control_true = sp.load_2d_example("inclusion_2d").copy("out/inclusion_2d_path")
 control_true.plot_geometry(kernel='vs')
 ```
 
-![](outputs/a060_inclusion_geometry.png)
+![Inclusion model geometry](outputs/a060_inclusion_geometry.png)
 
-
-Next, we need to split each source into a separate run (because I am not attempting source encoding). Fortunately, all of these runs are done in parallel using python's multiprocessing functionality. In the future it could be simplified even more to just make asynchronous command line calls.
+Next, we need to split each source into a separate run (Specster doesn't do source encoding). Fortunately, all of these runs are done in parallel using python's multiprocessing functionality.
 
 ```python
 control_true.run_each_source()
@@ -322,12 +358,11 @@ control_true.run_each_source()
 This will create a directory called "EACH_SOURCE" and populate it with copies of the specfem DATA directories although each has been modified to only include one source. The source directories are simply numbered sequentially starting with "000000".
 
 These will represent our "True" waveforms. Of course, we also need an initial model and data. For this, we will start with a homogenous background model.
-```python
-import specster as sp
 
+```python
 control_initial = control_true.copy("out/inclusion_2d_initial")
 
-# modify the second material property to match first. Homogenizes the model. 
+# modify the second material property to match first. Homogenizes the model.
 models = control_initial.par.material_models.models
 models[1].Vs = models[0].Vs
 models[1].Vp = models[0].Vp
@@ -338,11 +373,10 @@ fig, *_ = control_initial.plot_geometry(kernel='vs')
 
 ```
 
-![](outputs/a062_inclusion_geometry.png)
+![Inclusion starting model](outputs/a062_inclusion_geometry.png)
 
 
-
-It will then get tedious to work with multiple `Control2d` objects for each event, but Specster provides a higher level control class for facilitating the FWI workflow.
+It will then get tedious to work with multiple `Control2d` objects for each source, but Specster provides a higher level control class for facilitating the FWI workflow.
 
 ```python
 import specster as sp
@@ -354,7 +388,7 @@ inverter = sp.Inverter(
     # The initial control is used to setup the inversion
     control=control_initial,
     # A "true" control object is needed to compare model misfit
-    true_control=control_true,  
+    true_control=control_true,
     # The working_path optionally specifies where the inverter does its work
     working_path="outputs/fwi_inclusion_2d",
     # specifies the misfit function.
@@ -362,10 +396,53 @@ inverter = sp.Inverter(
 )
 ```
 
+We can then run a single iteration of the inversion like so:
 
 
+```python
+inverter.run_iteration()
+```
 
+`Inverter` is extensible through inheritance but here is the basic workflow conducted with run iteration:
 
+1. Ensure the run has been split for each source.
+2. Run the forward problem for each source.
+3. Calculate misfit and adjoint sources for each source. Save adjoints to each source data directory
+4. Run all sources in adjoint mode.
+5. Sum the gradients for each source after preconditioning with the approximated Hessian provided by Specfem2D and applying a median filter to the station locations in the gradient.
+6. Conduct a line search to find the optical step size, with a maximum update of ~2% (by default).
+7. Apply the scaled gradient to the velocity model to calculate the starting model for the next iteration (steepest descent).
+
+At each step the stats are saved, including misfit, model misfit, and step size.
+
+To run 3 iterations:
+
+```python
+for _ in range(3):
+    inverter.run_iteration()
+```
+
+A list of results are stored for each iteration
+
+```python
+print(inverter.results)
+```
+
+So users can specify stopping criteria and just break out of the loop.
+
+If the simplistic line search algorithm can't find a stepsize to reduce the misfit, then a `FailedLineSearch` Error will be raised. Once the optimal step size is found, the model is updated (via simple steepest descent) and results for the current iteration are saved in the subdirectory "ITERATIONS". 
+
+The model updates for the three iterations above are: 
+
+![FWI model updates by iteration](outputs/a066_model_updates.png)
+
+and comparing the final and true models:
+
+![Final vs true model](outputs/a066_final_model.png)
+
+# Conclusions
+
+Creating Specster helped me to better understand a variety of topics including Specfem2d and the general FWI workflow. Although it still lacks some features, it was a constructive educational endeavour.
 
 
 # References

@@ -2,9 +2,8 @@
 Run the initial model.
 """
 
-import specster as sp
-
 import local
+import specster as sp
 
 if __name__ == "__main__":
     breakpoint()
@@ -16,4 +15,3 @@ if __name__ == "__main__":
     control.clear_outputs()
     # run forward
     control.run(output_path=local.initial_output)
-

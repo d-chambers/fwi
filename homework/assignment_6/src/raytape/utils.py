@@ -2,18 +2,17 @@
 Utils for the tape module.
 """
 from functools import cache
+
 import numpy as np
-
-from scipy.interpolate import griddata
-from obspy.geodetics import gps2dist_azimuth
-
 import pyproj
+from obspy.geodetics import gps2dist_azimuth
+from scipy.interpolate import griddata
 
 
 @cache
 def get_geode():
     """Return a Geod object."""
-    return pyproj.Geod(ellps='WGS84')
+    return pyproj.Geod(ellps="WGS84")
 
 
 def get_waypoints(latlon_1, latlon_2, npts):
@@ -87,9 +86,10 @@ def get_distances(lats1, lons1, lats2, lons2):
     -------
     An array of distances (in m) for each lats/lons pair.
     """
+
     def _interweave(ar1, ar2):
         """Interweave array 1 and 2."""
-        out = np.empty(len(ar1)*2)
+        out = np.empty(len(ar1) * 2)
         out[::2] = ar1
         out[1::2] = ar2
         return out
@@ -131,7 +131,7 @@ def grid_to_vector(x_min, x_max, x_num, y_min, y_max):
     xvec0 = np.linspace(x_min, x_max, x_num)
     dx = xvec0[1] - xvec0[0]
     yvec0 = np.arange(y_min, y_max, dx)
-    X, Y = np.meshgrid(xvec0, yvec0, indexing='ij')
+    X, Y = np.meshgrid(xvec0, yvec0, indexing="ij")
     xvec = X.flatten()
     yvec = Y.flatten()
 
@@ -163,7 +163,11 @@ def get_random_vector(min_value, max_value, n):
 
 
 def grid_extrapolate(
-        xvec, yvec, zvec, npts, interpolation_type='linear',
+    xvec,
+    yvec,
+    zvec,
+    npts,
+    interpolation_type="linear",
 ):
     """
     Interpolates data on a 2D grid.

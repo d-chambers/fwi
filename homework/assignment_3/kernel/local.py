@@ -11,8 +11,8 @@ from pathlib import Path
 
 # setup paths
 here = Path(__file__).absolute().parent
-input_path = here / Path('inputs')
-output_path = here / Path('outputs')
+input_path = here / Path("inputs")
+output_path = here / Path("outputs")
 output_path.mkdir(exist_ok=True)
 
 # define source receiver geometry
@@ -36,7 +36,7 @@ model_geometry = output_path / "a010_model_geometry.png"
 
 true_model_output = "a020_true_model_outputs"
 
-initial_model_output = 'a030_initial_outputs'
+initial_model_output = "a030_initial_outputs"
 
 wf_misfit_waveform_plot = output_path / "a040_wf_misfit_waveforms.png"
 wf_adjoint_output = "a040_wf_adjoint_outputs"
@@ -53,9 +53,11 @@ amp_kernel_plot = output_path / "a060_amp_kernel.png"
 
 # --- helper functions
 
+
 def get_workspace():
-    """Get the workspace. """
+    """Get the workspace."""
     from misfit_kernel import Workspace
+
     ws = Workspace(
         work_path=output_path,
         bin_path=Path("/media/data/Gits/specfem2d/bin"),

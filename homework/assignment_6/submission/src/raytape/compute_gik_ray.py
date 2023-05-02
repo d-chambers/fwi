@@ -3,12 +3,11 @@ Module for computing G_{ik}.
 """
 from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-
-from raytape.utils import get_waypoints, get_distance, get_distances
 from raytape.spline import spline_vals
+from raytape.utils import get_distance, get_distances, get_waypoints
 
 
 def _get_ray_points(slats, slons, rlats, rlons, npts):
@@ -28,7 +27,9 @@ def _get_ray_points(slats, slons, rlats, rlons, npts):
     return out
 
 
-def calc_G(slats, slons, rlats, rlons, qlats, qlons, velocity, npts=1000, scale=8) -> pd.DataFrame:
+def calc_G(
+    slats, slons, rlats, rlons, qlats, qlons, velocity, npts=1000, scale=8
+) -> pd.DataFrame:
     """Calculate the design matrix G."""
     assert len(slats) == len(slons)
     assert len(rlats) == len(rlons)
@@ -54,9 +55,9 @@ def calc_G(slats, slons, rlats, rlons, qlats, qlons, velocity, npts=1000, scale=
     # because spline_vals is expensive, calculate it once for each
     # spline for all ray paths.
     for sp_num, (qlat, qlon) in enumerate(zip(qlats, qlons)):
-        svals = spline_vals(
-            qlon, qlat, scale, wp_flat[:, 1], wp_flat[:, 0], 1
-        ).reshape(-1, npts)
+        svals = spline_vals(qlon, qlat, scale, wp_flat[:, 1], wp_flat[:, 0], 1).reshape(
+            -1, npts
+        )
         out[:, sp_num] = np.sum(svals * (ray_distances / velocity[sp_num]), axis=1)
     assert not np.isnan(out).any()
     df = pd.DataFrame(out, columns=range(out.shape[1]), index=range(out.shape[0]))

@@ -5,30 +5,21 @@ import abc
 from functools import cache
 from pathlib import Path
 
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import obspy
 import pandas as pd
 from matplotlib.lines import Line2D
-from scipy.integrate import simps
 from obspy.signal.cross_correlation import correlate, xcorr_max
-
-from utils import (
-    read_trace,
-    save_trace,
-)
+from scipy.integrate import simps
+from utils import read_trace, save_trace
 
 matplotlib.rcParams.update({"font.size": 14})
 
 
 class _BaseMisFit(abc.ABC):
-    _component_colors = {
-        'Z': "orange",
-        "X": "cyan",
-        "Y": "Red"
-
-    }
+    _component_colors = {"Z": "orange", "X": "cyan", "Y": "Red"}
 
     def __init__(self, observed_path, synthetic_path):
         """Read in the streams for each directory."""
@@ -39,6 +30,7 @@ class _BaseMisFit(abc.ABC):
     def preprocess(self, st):
         """Preprocess the streams."""
         import local
+
         freq_min = local.bandwidth[0]
         freq_max = local.bandwidth[1]
 
@@ -95,19 +87,24 @@ class _BaseMisFit(abc.ABC):
 
         def add_legends(ax):
             """Add the legends for component and synth/observed."""
-            line1 = Line2D([0], [0], color='0.5', ls='--', label="predicted")
-            line2 = Line2D([0], [0], color='0.5', ls='-', label="observed")
+            line1 = Line2D([0], [0], color="0.5", ls="--", label="predicted")
+            line2 = Line2D([0], [0], color="0.5", ls="-", label="observed")
 
             # Create a legend for the first line.
-            leg1 = ax.legend(handles=[line1, line2], loc='upper right')
+            leg1 = ax.legend(handles=[line1, line2], loc="upper right")
             ax.add_artist(leg1)
 
             color_lines = [
-                Line2D([0], [0], color=self._component_colors[x],
-                       ls='-', label=f"{x} component")
+                Line2D(
+                    [0],
+                    [0],
+                    color=self._component_colors[x],
+                    ls="-",
+                    label=f"{x} component",
+                )
                 for x in self._component_colors
             ]
-            ax.legend(handles=color_lines, loc='upper left')
+            ax.legend(handles=color_lines, loc="upper left")
 
         def maybe_save(fig, out_file):
             """Maybe save the figure."""
@@ -115,7 +112,7 @@ class _BaseMisFit(abc.ABC):
                 return
             plt.tight_layout()
             fig.savefig(out_file)
-            plt.close('all')
+            plt.close("all")
 
         fig, (wf_ax, ad_ax) = plt.subplots(2, 1, sharex=True, figsize=(10, 5))
 
@@ -130,15 +127,15 @@ class _BaseMisFit(abc.ABC):
             ad_tr = adjoint[tr_obs.id]
             # make plots of observed/synthetics
             color = self._component_colors[tr_obs.stats.component]
-            wf_ax.plot(tr_obs.times(), tr_obs.data, '-', color=color)
-            wf_ax.plot(tr_synth.times(), tr_synth.data, '--', color=color)
+            wf_ax.plot(tr_obs.times(), tr_obs.data, "-", color=color)
+            wf_ax.plot(tr_synth.times(), tr_synth.data, "--", color=color)
             add_legends(wf_ax)
-            ad_ax.plot(ad_tr.times(), ad_tr.data, '-', color=color)
+            ad_ax.plot(ad_tr.times(), ad_tr.data, "-", color=color)
 
         wf_ax.set_title("Waveforms")
         ad_ax.set_title("Adjoint Source")
 
-        ad_ax.set_xlabel('Time (s)')
+        ad_ax.set_xlabel("Time (s)")
         fig.supylabel("Displacement (m)")
 
         maybe_save(fig, out_file)
@@ -206,8 +203,8 @@ class TravelTimeMisFit(_BaseMisFit):
         out = {}
         for tr_obs, tr_synth in self.iterate_streams():
             out[tr_obs.id] = {
-                'observed': np.abs(tr_obs.data).max(),
-                'synthetic': np.abs(tr_synth.data).max()
+                "observed": np.abs(tr_obs.data).max(),
+                "synthetic": np.abs(tr_synth.data).max(),
             }
         return pd.DataFrame(out).T
 
@@ -237,7 +234,7 @@ class TravelTimeMisFit(_BaseMisFit):
     @cache
     def calc_misfit(self):
         """Calculate the misfit between streams."""
-        return {i: v ** 2 for i, v in self.calc_tt_diff().items()}
+        return {i: v**2 for i, v in self.calc_tt_diff().items()}
 
     @cache
     def get_adjoint_sources(self):
@@ -252,7 +249,7 @@ class TravelTimeMisFit(_BaseMisFit):
             diff = tt_diffs[tr_synth.id]
             norm = 1 / norms[tr_synth.id]
             tdff = np.gradient(tr_synth.data, dt)
-            data = - diff * norm * tdff
+            data = -diff * norm * tdff
             if self._should_zero_trace(tid):
                 data = np.zeros_like(data)
             out_tr.data = data
@@ -278,6 +275,7 @@ class AmplitudeMisFit(_BaseMisFit):
     synthetic_path
         The directory containing the synthetic data.
     """
+
     def __init__(self, observed_path, synthetic_path, trace_min=0.01):
         """Read in the streams for each directory."""
         self._trace_min = trace_min
@@ -289,8 +287,8 @@ class AmplitudeMisFit(_BaseMisFit):
         out = {}
         for tr_obs, tr_synth in self.iterate_streams():
             out[tr_obs.id] = {
-                'observed': np.abs(tr_obs.data).max(),
-                'synthetic': np.abs(tr_synth.data).max()
+                "observed": np.abs(tr_obs.data).max(),
+                "synthetic": np.abs(tr_synth.data).max(),
             }
         return pd.DataFrame(out).T
 
@@ -299,9 +297,9 @@ class AmplitudeMisFit(_BaseMisFit):
         """Calculate the normalization waveforms."""
         out = {}
         for _, tr_synth in self.iterate_streams():
-            data = (tr_synth.data ** 2)
+            data = tr_synth.data**2
             tid = tr_synth.id
-            out[tid] = simps(data, dx=1/tr_synth.stats.sampling_rate)
+            out[tid] = simps(data, dx=1 / tr_synth.stats.sampling_rate)
         return out
 
     @cache
@@ -309,15 +307,15 @@ class AmplitudeMisFit(_BaseMisFit):
         """Calculate the travel time differences"""
         out = {}
         for tr_obs, tr_synth in self.iterate_streams():
-            rms_obs = np.sqrt(np.mean(tr_obs.data ** 2))
-            rms_synth = np.sqrt(np.mean(tr_synth.data ** 2))
-            out[tr_obs.id] = np.log(rms_obs/rms_synth)
+            rms_obs = np.sqrt(np.mean(tr_obs.data**2))
+            rms_synth = np.sqrt(np.mean(tr_synth.data**2))
+            out[tr_obs.id] = np.log(rms_obs / rms_synth)
         return out
 
     @cache
     def calc_misfit(self):
         """Calculate the misfit between streams."""
-        return {i: v ** 2 for i, v in self.calc_amp_ratio().items()}
+        return {i: v**2 for i, v in self.calc_amp_ratio().items()}
 
     @cache
     def get_adjoint_sources(self):
@@ -330,7 +328,7 @@ class AmplitudeMisFit(_BaseMisFit):
             norm = 1 / norms[tr_obs.id]
             amp = amp_ratios[tr_obs.id]
             synth_data = tr_synth.data
-            data = - norm * amp * synth_data
+            data = -norm * amp * synth_data
             if self._should_zero_trace(tr_obs.id):
                 data = np.zeros_like(data)
             out_tr.data = data

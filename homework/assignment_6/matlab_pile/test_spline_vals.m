@@ -37,7 +37,7 @@ if 1==1
     ff = spline_vals(clon, clat, q, lon, lat, {ncol});
     [X,Y,Z] = griddataXB(lon,lat,ff(:,1),100,'cubic');
     figure; pcolor(X,Y,Z); shading interp;
-    axis equal, axis(ax1); caxis([0 1]); colorbar('vert'); 
+    axis equal, axis(ax1); caxis([0 1]); colorbar('vert');
     xlabel(' Longitude (deg)'); ylabel(' Latitude (deg)');
     title([' Spherical spline basis function, order q=' num2str(q) ', centered at lon = ' ...
         sprintf('%.2f',clon) ', lat = ' sprintf('%.2f',clat) ]);

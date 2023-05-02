@@ -4,14 +4,9 @@ Examples of modifying the control.
 import shutil
 from pathlib import Path
 
+import local
 import matplotlib.pyplot as plt
 import specster as sp
-
-import local
-import matplotlib.pyplot as plt
-
-import local
-
 
 if __name__ == "__main__":
     import specster as sp
@@ -28,5 +23,5 @@ if __name__ == "__main__":
 
     control.write(overwrite=True)
 
-    fig, _ = control.plot_geometry(kernel=['vs', 'vp'])
-    fig.savefig(local.modified_geometry)
+    fig, _ = control.plot_geometry(kernel=["vs", "vp"])
+    fig.savefig(local.modified_geometry, bbox_inches="tight", pad_inches=0)

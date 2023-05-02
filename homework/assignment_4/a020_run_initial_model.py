@@ -2,9 +2,8 @@
 Generate the intial model.
 """
 
-import specster as sp
-
 import local
+import specster as sp
 
 if __name__ == "__main__":
     control = (

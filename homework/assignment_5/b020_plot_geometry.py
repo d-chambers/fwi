@@ -1,12 +1,9 @@
 """
 Generate the model geometry figure.
 """
-import matplotlib.pyplot as plt
-
-import specster
-
 import local
-
+import matplotlib.pyplot as plt
+import specster
 
 if __name__ == "__main__":
     fig, ax = plt.subplots(1, 1)
@@ -21,4 +18,3 @@ if __name__ == "__main__":
     ax.set_ylabel("Y (m)")
     ax.set_title("Model Geometry")
     plt.savefig(local.model_geometry)
-

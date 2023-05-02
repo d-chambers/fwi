@@ -1,6 +1,6 @@
 %
 % tomography_hw.m
-% 
+%
 % Template function for Ge162 (J. Tromp), homework set on seismic
 % tomography and inverse methods.
 %

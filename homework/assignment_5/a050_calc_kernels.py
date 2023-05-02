@@ -2,11 +2,9 @@
 Calculate kernels for each misfit/phase.
 """
 
-import obspy
-
-import specster as sp
-
 import local
+import obspy
+import specster as sp
 
 if __name__ == "__main__":
     initial_control = sp.Control2d(local.initial_workspace)
@@ -14,8 +12,8 @@ if __name__ == "__main__":
     tr = initial_st[0]
     start, stop = tr.stats.starttime, tr.stats.endtime
 
-    for misfit_path in local.wf_adjoint_sources.glob('*'):
-        misfit_name = misfit_path.name.split('.')[0]
+    for misfit_path in local.wf_adjoint_sources.glob("*"):
+        misfit_name = misfit_path.name.split(".")[0]
         st = obspy.read(misfit_path).trim(
             starttime=start,
             endtime=stop,
@@ -26,8 +24,7 @@ if __name__ == "__main__":
         # init control 2D
         new_control_path = local.kernel_paths / f"{misfit_name}"
         control = (
-            initial_control
-            .copy(new_control_path)
+            initial_control.copy(new_control_path)
             .prepare_fwi_adjoint()
             .write_adjoint_sources(st)
         )

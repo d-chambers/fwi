@@ -6,7 +6,6 @@ import local
 from misfit import TravelTimeMisFit
 from misfit_kernel import KernelKeeper
 
-
 if __name__ == "__main__":
     ws = local.get_workspace()
     local.reset_output_to_initial(ws)

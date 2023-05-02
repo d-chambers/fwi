@@ -13,10 +13,9 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import griddata
-
-from raytape.utils import grid_to_vector, grid_extrapolate
 from raytape import spline_vals
+from raytape.utils import grid_extrapolate, grid_to_vector
+from scipy.interpolate import griddata
 
 
 def plot_spline(clon, clat, scale, lon, lat, ncol):
@@ -24,21 +23,23 @@ def plot_spline(clon, clat, scale, lon, lat, ncol):
     Plot a spherical spline basis function
     """
     ff = spline_vals(clon, clat, scale, lon, lat, ncol)
-    X, Y, Z = grid_extrapolate(lon, lat, ff[:, 0], 100, 'cubic')
+    X, Y, Z = grid_extrapolate(lon, lat, ff[:, 0], 100, "cubic")
     fig, ax = plt.subplots()
     pc = ax.pcolor(X, Y, Z)
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
     ax.axis(ax1)
     fig.colorbar(pc)
-    ax.set_xlabel('Longitude (deg)')
-    ax.set_ylabel('Latitude (deg)')
-    ax.set_title(f"Spherical spline basis function, order q={scale}, centered at lon = {clon:.2f}, lat = {clat:.2f}")
+    ax.set_xlabel("Longitude (deg)")
+    ax.set_ylabel("Latitude (deg)")
+    ax.set_title(
+        f"Spherical spline basis function, order q={scale}, centered at lon = {clon:.2f}, lat = {clat:.2f}"
+    )
     return fig, ax
 
 
-
-
-def plot_surface_gradient(clon, clat, scale, ncol, lonmin, lonmax, latmin, latmax, title):
+def plot_surface_gradient(
+    clon, clat, scale, ncol, lonmin, lonmax, latmin, latmax, title
+):
     """A work in progress, probably not needed."""
     # create sample data
 
@@ -52,24 +53,27 @@ def plot_surface_gradient(clon, clat, scale, ncol, lonmin, lonmax, latmin, latma
     ax = axs[0]
     X, Y = np.meshgrid(lon, lat)
     Z = ff[:, :, 4]
-    Z_interp = griddata((lon.flatten(), lat.flatten()), Z.flatten(), (X, Y), method='cubic')
-    pcm = ax.pcolormesh(X, Y, Z_interp, shading='interp')
-    fig.colorbar(pcm, ax=ax, orientation='horizontal')
-
+    Z_interp = griddata(
+        (lon.flatten(), lat.flatten()), Z.flatten(), (X, Y), method="cubic"
+    )
+    pcm = ax.pcolormesh(X, Y, Z_interp, shading="interp")
+    fig.colorbar(pcm, ax=ax, orientation="horizontal")
 
     ax = axs[1]
     breakpoint()
     Z = np.sqrt(ff[:, :, 2] ** 2 + ff[:, :, 3] ** 2)
-    Z_interp = griddata((lon.flatten(), lat.flatten()), Z.flatten(), (X, Y), method='cubic')
-    Q = ax.quiver(lon, lat, ff[:, :, 2], -ff[:, :, 3], Z_interp, cmap='coolwarm')
-    fig.colorbar(Q, ax=ax, orientation='horizontal')
-    ax.set_title('surface gradient vector field, along with the magnitude')
-    ax.axis('equal')
+    Z_interp = griddata(
+        (lon.flatten(), lat.flatten()), Z.flatten(), (X, Y), method="cubic"
+    )
+    Q = ax.quiver(lon, lat, ff[:, :, 2], -ff[:, :, 3], Z_interp, cmap="coolwarm")
+    fig.colorbar(Q, ax=ax, orientation="horizontal")
+    ax.set_title("surface gradient vector field, along with the magnitude")
+    ax.axis("equal")
 
     return fig
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # create sample data
     num_x = 200  # KEY COMMAND
@@ -102,7 +106,7 @@ if __name__ == '__main__':
 
     # magnitude of surface gradient of spline
     # check the computation return spline_vals.m
-    dfmag = np.sqrt(dfdt ** 2 + ((1 / np.sin(th)) * dfdp) ** 2)
+    dfmag = np.sqrt(dfdt**2 + ((1 / np.sin(th)) * dfdp) ** 2)
     np.linalg.norm(dfmag - ff[:, 4])
     new_diff = dfmag - ff[:, 4]
 
@@ -110,16 +114,16 @@ if __name__ == '__main__':
 
     # plot
     fig, axs = plt.subplots(nrows=3, ncols=2, figsize=(8, 6))
-    stitd = ['f', 'df/d phi', 'df/d theta', 'laplacian(f)', '|grad(f)|']
+    stitd = ["f", "df/d phi", "df/d theta", "laplacian(f)", "|grad(f)|"]
 
     for ii in range(len(stitd)):
-        X, Y, Z = grid_extrapolate(lon, lat, ff[:, ii], 100, 'cubic')
+        X, Y, Z = grid_extrapolate(lon, lat, ff[:, ii], 100, "cubic")
         ax = axs.ravel()[ii]
         clim = np.array([-1, 1]) * d1max if ii in {1, 2} else None
         pcm = ax.pcolor(X, Y, Z, clim=clim)
         fig.colorbar(pcm, ax=ax)
         ax.set_title(stitd[ii])
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
         ax.axis(ax1)
     fig.tight_layout()
     axs[-1, -1].set_axis_off()

@@ -14,8 +14,8 @@ import fwi_plot
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import obspy
+import pandas as pd
 from pydantic import Field
 from pydantic.dataclasses import dataclass
 from scipy.integrate import simps
@@ -131,8 +131,8 @@ class Workspace:
         for num, line in enumerate(lines):
             if line.strip().lower().startswith("source_type"):
                 lines[num] = f"source_type                     = {source_type:d}"
-        with path.open('w') as fi:
-            fi.write('\n'.join(lines))
+        with path.open("w") as fi:
+            fi.write("\n".join(lines))
 
     # --- Private utils
 
@@ -163,9 +163,9 @@ class KernelKeeper:
     """A simple class for managing kernels."""
 
     def __init__(self, output_directory, sources=None, receivers=None):
-        self.kernel_files = list(Path(output_directory).rglob('*kernel.dat'))
+        self.kernel_files = list(Path(output_directory).rglob("*kernel.dat"))
         # find rho alpha beta and load it
-        out = [x for x in self.kernel_files if 'rhop_alpha_beta' in x.name]
+        out = [x for x in self.kernel_files if "rhop_alpha_beta" in x.name]
         assert len(out) == 1, "Exactly one kernel should exist."
         self.rho_alpha_beta = self.load_kernel_file(out[0])
         self._sources = sources
@@ -173,11 +173,11 @@ class KernelKeeper:
 
     def load_kernel_file(self, file_path):
         """Load a particular kernel file into a dataframe."""
-        names = ['x', 'z'] + list(file_path.name.split('_')[1:-1])
+        names = ["x", "z"] + list(file_path.name.split("_")[1:-1])
         df = pd.read_csv(file_path, delim_whitespace=True, names=names, header=None)
         return df
 
-    def plot(self, columns=('rhop', 'alpha', 'beta'), scale=0.15, out_file=None):
+    def plot(self, columns=("rhop", "alpha", "beta"), scale=0.15, out_file=None):
         """
         Plot several kernels.
         """
@@ -197,15 +197,17 @@ class KernelKeeper:
         min_val, max_val = -abs_max_val * scale, abs_max_val * scale
 
         # extract/format data
-        x_vals, z_vals, data = grid(df['x'], df['z'], df[column])
-        extent = [df['x'].min(), df['x'].max(), df['z'].min(), df['z'].max()]
+        x_vals, z_vals, data = grid(df["x"], df["z"], df[column])
+        extent = [df["x"].min(), df["x"].max(), df["z"].min(), df["z"].max()]
 
         # Setup figure
         if ax is None:
             fig, ax = plt.subplots(figsize=(8, 8))
 
         # plot, set labels etc.
-        im = ax.imshow(data, extent=extent, cmap="seismic_r", vmin=min_val, vmax=max_val)
+        im = ax.imshow(
+            data, extent=extent, cmap="seismic_r", vmin=min_val, vmax=max_val
+        )
         ax.set_xlabel("X (m)")
         ax.set_ylabel("Z (m)")
         ax.set_title(f"{column.title()} Kernel")
@@ -220,7 +222,7 @@ class KernelKeeper:
                 ax.scatter(x, z, 450, marker="v", **kwargs)
 
         plt.colorbar(im, ax=ax)
-        ax.tick_params(axis='both', which='major', labelsize=14)
+        ax.tick_params(axis="both", which="major", labelsize=14)
         return ax
 
 

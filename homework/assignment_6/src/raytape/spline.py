@@ -41,7 +41,7 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, cols):
     th_vec = (90 - lat_vec) / deg
 
     # options and parameters -- q controls the scale (width) of the spline
-    nf = 2 ** scale
+    nf = 2**scale
     c72 = np.cos(72 / deg)
     base = np.arccos(c72 / (1 - c72))
     db = base / nf
@@ -53,9 +53,7 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, cols):
     ndata = len(th_vec)
 
     # r : delta/delta-bar in WD95
-    del_ = np.arccos(
-        np.cos(th) * costh + np.sin(th) * sinth * np.cos(ph - ph_vec)
-    )
+    del_ = np.arccos(np.cos(th) * costh + np.sin(th) * sinth * np.cos(ph - ph_vec))
     r = del_ / db
     dif = r - 1
 
@@ -74,14 +72,14 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, cols):
 
     if cols == 1:
         part1 = (-0.25 * dif[inds2] + 0.75) * dif[inds2] - 0.75
-        ff[inds2, 0] = (part1 * dif[inds2] + 0.25)
+        ff[inds2, 0] = part1 * dif[inds2] + 0.25
         sub1 = 0.75 * r[inds3] - 1.5
         ff[inds3, 0] = sub1 * r[inds3] ** 2 + 1
         ff[inds4, 0] = 1
 
     else:
         cosdel = np.cos(th) * costh + np.sin(th) * sinth * np.cos(ph - ph_vec)
-        sindel = np.sqrt(1 - cosdel ** 2)
+        sindel = np.sqrt(1 - cosdel**2)
         cotdel = cosdel / sindel
 
         # delta: arc-distance from test-point to gridpoints
@@ -89,9 +87,7 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, cols):
 
         # ddelta/dphi and ddelta/dtheta (see MMA file wang_arc.nb)
         dadp = (np.sin(th) * sinth * np.sin(ph_vec - ph)) / sindel
-        dadt = (
-                       np.cos(th) * sinth - costh * np.sin(th) * np.cos(ph - ph_vec)
-               ) / sindel
+        dadt = (np.cos(th) * sinth - costh * np.sin(th) * np.cos(ph - ph_vec)) / sindel
 
         # db : delta-bar in WD95
         # d_near varies for each gridpoint, due to irregularities in grids
@@ -99,21 +95,31 @@ def spline_vals(clon, clat, scale, lon_vec, lat_vec, cols):
         # datapoint is outside the outer circle
 
         # datapoint is within the outer ring
-        ff[inds2, 0] = ((-0.25 * dif[inds2] + 0.75) * dif[inds2] - 0.75) * dif[inds2] + 0.25
-        ff[inds2, 1] = dq * (-0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2) * dadp[inds2]
-        ff[inds2, 2] = dq * (-0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2) * dadt[inds2]
+        ff[inds2, 0] = ((-0.25 * dif[inds2] + 0.75) * dif[inds2] - 0.75) * dif[
+            inds2
+        ] + 0.25
+        ff[inds2, 1] = (
+            dq * (-0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2) * dadp[inds2]
+        )
+        ff[inds2, 2] = (
+            dq * (-0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2) * dadt[inds2]
+        )
         if cols >= 4:
-            sub1 = (-0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2)
+            sub1 = -0.75 + 1.5 * dif[inds2] - 0.75 * dif[inds2] ** 2
             ff[inds2, 3] = dq * (3 - 1.5 * r[inds2] + cotdel[inds2] * sub1)
-            ff[inds2, 4] = 0.75 * db ** -3 * (2 * db - del_[inds2]) ** 2
+            ff[inds2, 4] = 0.75 * db**-3 * (2 * db - del_[inds2]) ** 2
 
             # datapoint is within the inner circle
         ff[inds3, 0] = (0.75 * r[inds3] - 1.5) * (r[inds3] ** 2) + 1
         ff[inds3, 1] = dq * (-3 * r[inds3] + 2.25 * r[inds3] ** 2) * dadp[inds3]
         ff[inds3, 2] = dq * (-3 * r[inds3] + 2.25 * r[inds3] ** 2) * dadt[inds3]
         if cols >= 4:
-            ff[inds3, 3] = dq * (-3 + 4.5 * r[inds3] + cotdel[inds3] * (-3 * r[inds3] + 2.25 * r[inds3] ** 2))
-            ff[inds3, 4] = 0.75 * db ** -3 * (4 * db - 3 * del_[inds3]) * del_[inds3]
+            ff[inds3, 3] = dq * (
+                -3
+                + 4.5 * r[inds3]
+                + cotdel[inds3] * (-3 * r[inds3] + 2.25 * r[inds3] ** 2)
+            )
+            ff[inds3, 4] = 0.75 * db**-3 * (4 * db - 3 * del_[inds3]) * del_[inds3]
 
         # datapoint is in the vicinity of the target spline centerpoint
         # FIX THIS: see Wang & Dahlen (1995)

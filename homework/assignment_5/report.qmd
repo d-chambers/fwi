@@ -28,15 +28,15 @@ The purpose of this assignment is to create an event kernel.
 
 # Prompt
 
-Please extend your assignment 3 to compute an event kernel. 
-All you need to do is to add more stations and make measurements 
-at all stations and put the associated adjoint sources under the 
-SEM directory as we discussed at the class. Be careful with the naming 
-convention of adjoint sources and make sure that all synthetics and adjoint 
+Please extend your assignment 3 to compute an event kernel.
+All you need to do is to add more stations and make measurements
+at all stations and put the associated adjoint sources under the
+SEM directory as we discussed at the class. Be careful with the naming
+convention of adjoint sources and make sure that all synthetics and adjoint
 sources have the same starting time, length and sampling rate.
 
-Ideally, you can compute event kernels for different misfit functions to 
-compare the effect of measurements. But a misfit function of your choice 
+Ideally, you can compute event kernels for different misfit functions to
+compare the effect of measurements. But a misfit function of your choice
 would be enough.
 
 :::{.note}
@@ -97,7 +97,7 @@ There were 25 nodes per element, corresponding to approximately 5 in each
 direction. However, since GLLs are not evenly spaced, the average spacing
 (as reported by SpecFEM2D) is 625m and the minimum spacing is 431m.
 
-The Cartesian simulation is run in P-SV mode rather than SH/membrane wave mode. 
+The Cartesian simulation is run in P-SV mode rather than SH/membrane wave mode.
 
 ## CFL Stability
 
@@ -140,9 +140,9 @@ To obtain the sensitivity kernels, the following procedure is employed:
 2. Run forward simulation with the initial model and store associated seismograms/last frame of the wavefield
 3. Calculate misfit between waveforms produced by the true and initial models and associated adjoint sources
 4. Run adjoint simulation and visualize the associated (raw) kernels
-5. Apply a minimum windowing algorithm to raw kernels to mute affect of station/sources  
+5. Apply a minimum windowing algorithm to raw kernels to mute affect of station/sources
 6. Visualize raw and muted kernels
-7. 
+7.
 The procedure is carried out for the entire waveform window for each station.
 The misfit functions used are described in the following sections.
 
@@ -162,9 +162,9 @@ This preprocessing of waveforms is applied before calculating misfit functions a
 The waveform misfit is defined as [@bozdaug2011misfit]:
 
 $$
-    \chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N 
+    \chi(\mathbf{m})=\frac{1}{2} \sum_{r=1}^N
     \int_0^T\left\|\mathbf{d}\left(\mathbf{x}_r, t\right)
-    -\mathbf{s}\left(\mathbf{x}_r, t, \mathbf{m}\right)\right\|^2 
+    -\mathbf{s}\left(\mathbf{x}_r, t, \mathbf{m}\right)\right\|^2
     \mathrm{~d} t
 $${#eq-wf-misfit}
 
@@ -172,7 +172,7 @@ and the adjoint source as:
 
 $$
     f_i^{\dagger}(\mathbf{x}, t)=-\sum_{r=1}^N \frac{1}{M_r}\left[d_i\left(\mathbf{x}_r, T-t\right)
-    -s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right)\right] w_r(T-t) 
+    -s_i\left(\mathbf{x}_r, T-t, \mathbf{m}\right)\right] w_r(T-t)
     \delta\left(\mathbf{x}-\mathbf{x}_r\right)
 $${#eq-wf-adjoint}
 
@@ -209,16 +209,16 @@ The following figures show the raw and muted travel-time misfit event kernels:
 
 # Discussion
 
-The waveform misfit kernel is much more effected by high amplitude values at the source 
+The waveform misfit kernel is much more effected by high amplitude values at the source
 location than the travel time misfit kernels. For example, comparing figure @fig-wf-raw with
 @fig-wf-muted, until the source region is muted, its high amplitude completely dominates
 the kernel image. For the travel time misfit kernel, however, both the source and receiver
-have significant amplitudes (compare @fig-tt-raw, which has clear station imprints, to 
-@fig-tt-muted). 
+have significant amplitudes (compare @fig-tt-raw, which has clear station imprints, to
+@fig-tt-muted).
 
 In both cases, the kernel highlight the nature of the vertical force; most S energy is
-generated perpendicular to the source axis (positive Z) and less energy above and below 
-the source, though this source preference is most pronounced in the travel time misfit 
+generated perpendicular to the source axis (positive Z) and less energy above and below
+the source, though this source preference is most pronounced in the travel time misfit
 kernels.
 
 

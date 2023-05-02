@@ -1,5 +1,5 @@
 %
-% function dist = arcdist(slat, slon, rlat, rlon) 
+% function dist = arcdist(slat, slon, rlat, rlon)
 % CARL TAPE, 27-Feb-2007
 % printed xxx
 %

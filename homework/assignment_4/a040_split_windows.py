@@ -2,9 +2,8 @@
 Split the windows for the true and initial waveforms
 """
 
-import obspy
-
 import local
+import obspy
 
 
 def split_wave(st):
@@ -26,5 +25,5 @@ if __name__ == "__main__":
         for phase_name, phase_st in split_wave(st).items():
             path = local.split_wf_directory / phase_name / f"{name}.mseed"
             path.parent.mkdir(exist_ok=True, parents=True)
-            phase_st.write(path, 'mseed')
+            phase_st.write(path, "mseed")
     # also save the complete waveforms

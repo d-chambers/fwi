@@ -27,23 +27,23 @@ header-includes:
 The purpose of this assignment is to explore ray-based tomography techniques
 for estimating earth structure.
 
-The matlab code was also converted to a small python package (called raytape) so it 
-can be run without a matlab license. The source code and the report files are 
-attached with this assignment. 
+The matlab code was also converted to a small python package (called raytape) so it
+can be run without a matlab license. The source code and the report files are
+attached with this assignment.
 
 # Forward Problem
 
 ## Model Parameterization
 
-For this assignment, perturbations of the current earth model 
+For this assignment, perturbations of the current earth model
 are described in terms of $M$ basis functions:
 
 $$
 \delta ln(c(x)) = \sum_{k=1}^{M} \delta m_k B_k (x)
 $${#eq-peturb}
 
-In this case, the basis functions selected ($B_k$) are the spherical splines of 
-@wang1995spherical. 
+In this case, the basis functions selected ($B_k$) are the spherical splines of
+@wang1995spherical.
 
 ::: {.callout-note appearance="simple"}
 
@@ -80,7 +80,7 @@ $$
 \delta T_i = - \int_{ray_i} c^{-1} \delta ln(c) ds,
 $${#eq-dT}
 
-where ds denotes a segment of the ith ray. Show how this leads to $d = G \delta m$, 
+where ds denotes a segment of the ith ray. Show how this leads to $d = G \delta m$,
 where the data vector is given by
 
 $$
@@ -90,8 +90,8 @@ $${#eq-d}
 and write the expression for the $G_{ik}$ element of the design matrix $G$.
 :::
 
-To derive an expression for $G_{ik}$ we can work backwards by substituting 
-@eq-peturb into @eq-d. 
+To derive an expression for $G_{ik}$ we can work backwards by substituting
+@eq-peturb into @eq-d.
 
 $$
 \delta T_{i} = \int_{ray_i} c^{-1} \sum_{k=1}^{M} \delta m_k B_k (x) ds
@@ -101,7 +101,7 @@ And since the summation term can be rewritten in terms of a dot product
 (using Einstein's summation notation)
 
 $$
-\delta T_{i} = \int_{ray_i} c^{-1} B_k  ds  \cdot \delta m_k  
+\delta T_{i} = \int_{ray_i} c^{-1} B_k  ds  \cdot \delta m_k
 $$
 
 Hence,
@@ -113,7 +113,7 @@ $${#eq-gik}
 and, if we rewrite the previous expressions in vector notation, it follows that:
 
 $$
-\delta T_{i} = G_{ik} \delta m_k  
+\delta T_{i} = G_{ik} \delta m_k
 $$
 
 $$
@@ -144,7 +144,7 @@ corresponds to the value of a spline basis function.
 :::{callout-note}
 Because python indexing starts at 0, and Matlab's starts at 1, I have printed both
 the G value for the requested index and the previous index (which will match the
-Matlab answer.) 
+Matlab answer.)
 :::
 
 To double check the values in the G matrix, I created several plots of random ray paths
@@ -183,7 +183,7 @@ $${#eq-delta_m}
 
 The dimensions of the requested symbols are as follows:
 
-| Symbol     | Dimensions | 
+| Symbol     | Dimensions |
 |------------|------------|
 | $\delta$ m | k x 1      |
 | $d$        | i x 1      |
@@ -193,7 +193,7 @@ The dimensions of the requested symbols are as follows:
 
 :::{.callout-note}
 The provided $d$ array is the difference between the observed travel times
-and the predicted. Otherwise, we would need to calculate this value from 
+and the predicted. Otherwise, we would need to calculate this value from
 travel times, phase picks, and event origin times.
 :::
 
@@ -238,14 +238,14 @@ for png_file in sorted(dir_path.glob("*.png")):
     plt.show()
 ```
 
-As the values of $\lambda$ increase, the results appeared more "smoothed" and the high 
-amplitude anomalies around the boarder of the checkerboard begin to vanish. Clearly, 
+As the values of $\lambda$ increase, the results appeared more "smoothed" and the high
+amplitude anomalies around the boarder of the checkerboard begin to vanish. Clearly,
 some value of $\lambda$ is required, but it is somewhat subjective to determine the right
 value if the initial model perturbations weren't as obvious.
 
 Using the same parameters as before, the inversion was run again but this time only
 including 5 events. The results are similar to those produced by using inversion with
-all events but does lack some resolution. 
+all events but does lack some resolution.
 
 
 ```{python}
@@ -268,7 +268,7 @@ for png_file in sorted(dir_path.glob("*.png")):
 
 # Question 2g
 
-What are two ways to stabilize the inverse problem, given total control over the 
+What are two ways to stabilize the inverse problem, given total control over the
 experimental design?
 
 :::

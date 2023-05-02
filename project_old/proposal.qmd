@@ -22,26 +22,25 @@ header-includes:
  \usepackage{amsmath}
 ---
 
-For the final project, I propose imaging the geological perturbations induced by mining. 
+For the final project, I propose imaging the geological perturbations induced by mining.
 Particularly, longwall coal mining.
 
-When material is removed, the ground responds by forming rubblized, fracture, and flexural 
-zones. For this project, these perturbations will be assumed to occur above the mined out 
+When material is removed, the ground responds by forming rubblized, fracture, and flexural
+zones. For this project, these perturbations will be assumed to occur above the mined out
 area and extending in front of the mining face by 15 degrees. The perturbations itself
 will be described by 5% decrease in P velocity, 8% decrease in S velocity, and 5% decrease
 in density. Sources will occur in the coal ahead of the mining and in the sandstone layers
 in the roof and floor behind the mining face. Receivers will be evenly spaced located on the
 surface. The initial velocity structure will be a 1D layered model including coal, sandstone,
-soil, and shale (@fig-geometry). 
+soil, and shale (@fig-geometry).
 
-The purpose of the exercise is the asses the feasible of various FWI workflows to image 
-these perturbations in a simplified, yet semi-realistic, geometry. The layered model 
-(without the perturbations) will be used as the initial model, then the effectiveness of 
-different misfit functions, kernel pre-conditioning, and other adjustable parameters will 
-be explored.  
+The purpose of the exercise is the asses the feasible of various FWI workflows to image
+these perturbations in a simplified, yet semi-realistic, geometry. The layered model
+(without the perturbations) will be used as the initial model, then the effectiveness of
+different misfit functions, kernel pre-conditioning, and other adjustable parameters will
+be explored.
 
 ![
-Problem geometry including sources (stars), receivers(triangle), stratigraphic layers, and 
+Problem geometry including sources (stars), receivers(triangle), stratigraphic layers, and
 mining-induced perturbations (semi-transparent white region).
 ](figures/geometry.png){#fig-geometry}
-

@@ -1,8 +1,8 @@
 """
 Project for reproducing tromp et al., 2005 figures
 """
-from functools import cache
 from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 
 import numpy as np
@@ -10,8 +10,8 @@ import obspy
 
 # setup paths
 here = Path(__file__).absolute().parent
-input_path = here / Path('inputs')
-output_path = here / Path('outputs')
+input_path = here / Path("inputs")
+output_path = here / Path("outputs")
 output_path.mkdir(exist_ok=True)
 
 tt_diff_path = input_path / "measure_vec.dat"
@@ -22,12 +22,12 @@ damped_delta_m_path = output_path / "damped_delta_m.pkl"
 
 spline_sensitivity_path = output_path / "spline_sensitivity.npy"
 
-velocity_change_directory = output_path / 'a050_velocity_change_plots'
+velocity_change_directory = output_path / "a050_velocity_change_plots"
 velocity_change_directory.mkdir(exist_ok=True, parents=True)
 
 damped_delta_m_reduced_path = output_path / "damped_delta_reduced_m.pkl"
 
-velocity_change_reduced_directory = output_path / 'a070_velocity_change_reduced_plots'
+velocity_change_reduced_directory = output_path / "a070_velocity_change_reduced_plots"
 velocity_change_reduced_directory.mkdir(exist_ok=True, parents=True)
 
 map_extents = [-121, -114, 31, 37]
@@ -75,14 +75,16 @@ def get_map_coords_grid():
 
 
 def load_data():
-    data_path = Path('inputs')
-    slons, slats, _ = np.loadtxt(data_path / 'events_lonlat.dat', skiprows=1, unpack=True)
+    data_path = Path("inputs")
+    slons, slats, _ = np.loadtxt(
+        data_path / "events_lonlat.dat", skiprows=1, unpack=True
+    )
 
     # load receivers
-    rlons, rlats, _ = np.loadtxt(data_path / 'recs_lonlat.dat', skiprows=1, unpack=True)
+    rlons, rlats, _ = np.loadtxt(data_path / "recs_lonlat.dat", skiprows=1, unpack=True)
 
     # load spline centers
-    qlons, qlats = np.loadtxt(data_path / 'con_lonlat_q08.dat', unpack=True)
+    qlons, qlats = np.loadtxt(data_path / "con_lonlat_q08.dat", unpack=True)
 
     return LoadedData(
         slons=slons,

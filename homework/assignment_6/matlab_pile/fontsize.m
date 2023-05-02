@@ -20,5 +20,3 @@ for k=1:length(hc);
     end
 end
 set(hall,'fontsize',fs);
-  
- 

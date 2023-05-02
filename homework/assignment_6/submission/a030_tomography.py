@@ -4,11 +4,9 @@ Script for running
 import pickle
 from pathlib import Path
 
+import local
 import numpy as np
 from raytape import spline_vals
-
-import local
-
 
 if __name__ == "__main__":
     # load observed data
@@ -25,9 +23,9 @@ if __name__ == "__main__":
     out = {}
     lambdas = 10 ** (np.linspace(np.log10(0.1), np.log10(40.0), 6))
     for lam in lambdas:
-        inv = np.linalg.inv(GtG + np.eye(len(Gtd)) * lam ** 2)
+        inv = np.linalg.inv(GtG + np.eye(len(Gtd)) * lam**2)
         delta_m = inv @ Gtd
         out[lam] = delta_m
 
-    with open(local.damped_delta_m_path, 'wb') as fi:
+    with open(local.damped_delta_m_path, "wb") as fi:
         pickle.dump(out, fi)
