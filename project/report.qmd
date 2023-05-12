@@ -161,7 +161,7 @@ control.plot_geometry(kernel=['vs', 'vp'])
 ![Modified geometry](outputs/a040_modified_geometry.png){}
 
 
-# Modifying the parfile 
+# Modifying the parfile
 
 For many use cases, users shouldn't have to modify the parameters contained in the specfem par_file directory. However, then these do need to be modified, this is done through the `par` attribute of `Control2d`. `par` is a hierarchy of [pydantic models](https://docs.pydantic.dev/latest/usage/models/) which matches the structure of the par file. They also validate inputs to help prevent producing an invalid par_file. For example:
 
@@ -199,7 +199,7 @@ create a new `Control2d` object to update the state.
 
 ## Parfile updates
 
-The material models of the simulation can be updated directly through Specfem2d's parfile. 
+The material models of the simulation can be updated directly through Specfem2d's parfile.
 
 ```python
 import specster as sp
@@ -247,7 +247,7 @@ control.plot_geometry(kernel=('vp', 'vs'))
 
 # Full Waveform Inversion
 
-Specster provides a few different abstraction levels for performing full waveform inversion. Using `Control2d` directly is the lowest level of abstraction, but it is informative to see how this is done before moving to higher abstraction levels.
+Specster provides a few different abstraction levels for performing full waveform inversion. Using `Control2d` directly is the lowest level of abstraction, and provides the most control over the inersion process.
 
 ## Single event-station kernel calculation
 
@@ -274,13 +274,13 @@ Next, we setup our initial model by modifying the velocity of the true model. Ag
 
 ```python
 control_initial = control_true.copy("outputs/kernel_one_one_true")
-
+# reduce s velocity by 2%.
 control_initial.par.material_models.models[0].vs *= 0.98
 control_initial.prepare_fwi_forward()
 control_initial.run()
 ```
 
-Next, the misfit classes form the FWI are used to calculate the misfit and adjoint sources. We will simply use the waveform misfit but travel time and amplitude misfit functions are also implemented. 
+Next, the misfit classes from the `fwi` module are used to calculate the misfit and adjoint sources. We will simply use the waveform misfit but travel time and amplitude misfit functions are also implemented.
 
 After this the adjoints are saved to disk and we run the initial control in fwi_adjoint mode.
 
@@ -293,11 +293,11 @@ st_true = control_true.output.get_waveforms()
 st_initial = control_initial.output.get_waveforms()
 
 # calculate adjoint source
-misfitter = WaveformMisFit(st_true, st_initial)
-adjoint_source = misfitter.get_adjoint_sources()
+misfitter = WaveformMisFit()
+adjoint_source = misfitter.get_adjoint_sources(st_true, st_initial)
 adjoint_source.plot()
 
-# write adjoints to initial and run
+# write adjoints to initial control and run fwi
 control_initial.write_adjoint_sources(adjoint_source)
 control_initial.prepare_fwi_adjoint()
 control_initial.run()
@@ -305,27 +305,8 @@ control_initial.run()
 
 ![Adjoint source example](outputs/a050_adjoint_plot.png){}
 
-Finally, we load the kernel and plot.
+Now we load the kernel and plot.
 
-
-```python
-from specster.fwi.misfit import WaveformMisFit
-
-# load seismograms as Streams
-st_true = control_true.output.get_waveforms()
-st_initial = control_initial.output.get_waveforms()
-
-# calculate adjoint source
-misfitter = WaveformMisFit(st_true, st_initial)
-adjoint_source = misfitter.get_adjoint_sources()
-
-# write adjoints to initial and run
-control_initial.write_adjoint_sources(adjoint_source)
-control_initial.prepare_fwi_adjoint()
-control_initial.run()
-```
-
-Now we can plot the banana donut.
 
 ```python
 output = control_initial.output
@@ -334,10 +315,56 @@ output.plot_kernel(kernel='beta')
 
 ![Single station/source kernel](outputs/a050_sing_single_donut.png)
 
-This exercise could, of course, be repeated for multiple stations, but the workflow is identical. Things get more interesting in more realistic cases involving multiple stations and multiple events.
+This exercise could, of course, be repeated for multiple stations, but the workflow is identical.
+
+Before moving onto multiple stations/events, let's take a closer look at the misfit class and how to extend it. Here is the definition of the waveform misfit:
+
+```python
+from scipy.integrate import simps
+
+from specster.fwi.misfit import BaseMisfit
+
+
+class WaveformMisfit(BaseMisfit):
+    """
+    Manager to calculate misfit and ajoints for waveform misfit.
+    """
+
+    def calc_misfit(self, tr_obs, tr_synth):
+        """Calculate the misfit between streams."""
+        dx = tr_obs.stats.delta
+        misfit = simps((tr_synth.data - tr_obs.data) ** 2, dx=dx)
+        return misfit
+
+    def calc_adjoint(self, tr_obs, tr_synth):
+        """Return the adjoint source trace."""
+        new = tr_obs.copy()
+        new.data = tr_synth.data - tr_obs.data
+        return new
+```
+
+It is only required to implement two methods `clac_misfit` and `calc_adjoint`. These both take two `obspy.Trace` objects, observed and synthetic data, and return either a `float` (for the misfit) or a trace with the adjoint source.
+
+You can also control how the preprocessing is conducted in a few ways. By default, the traces are detrended and tapered. The taper percentage is controlled by the `taper_precentage` attribute which is 0.95 (95%) by default. `normalize_traces` controls whether each trace is normalized to its maximum amplitude during preprocessing. For even more control, the `preprocess_traces` method can be implemented in which case the subclass will be in complete control of preprocessing.
+
+When creating or debugging misfit functions, it can be extremely helpful to visualize the original traces and adjoint source. Here is an example:
+
+```python
+st_true = control_true.output.get_waveforms()
+st_initial = control_initial.output.get_waveforms()
+
+misfit = WaveformMisfit()
+fig, (ax1, ax2) = misfit.plot(st_true, st_initial)
+```
+
+![](outputs/a052_adjoint_plot.png)
+
+Waveforms can also be windowed by creating a windowing dataframe, which will tell the Misfit class which parts of the waveform to use and zero the rest in the adjoint output.
+
 
 ## Multiple Events and Multiple Stations
 
+For the full FWI worklow, the
 First, I will demonstrate a multi-event multi-station workflow. One simple case is to use a nearly homogeneous velocity model with a small inclusion in the center and very good coverage of events and stations. Specster's "inclusion_2d" dataset was created for this purpose.
 
 ```python
@@ -380,7 +407,7 @@ It will then get tedious to work with multiple `Control2d` objects for each sour
 
 ```python
 import specster as sp
-from specster.fwi.misfit import WaveformMisFit
+from specster.fwi.misfit import WaveformMisfit
 
 inverter = sp.Inverter(
     # Specifies where true data are found
@@ -392,7 +419,7 @@ inverter = sp.Inverter(
     # The working_path optionally specifies where the inverter does its work
     working_path="outputs/fwi_inclusion_2d",
     # specifies the misfit function.
-    misfit=WaveformMisFit,
+    misfit=WaveformMisfit(),
 )
 ```
 
@@ -410,7 +437,7 @@ inverter.run_iteration()
 3. Calculate misfit and adjoint sources for each source. Save adjoints to each source data directory
 4. Run all sources in adjoint mode.
 5. Sum the gradients for each source after preconditioning with the approximated Hessian provided by Specfem2D and applying a median filter to the station locations in the gradient.
-6. Conduct a line search to find the optical step size, with a maximum update of ~2% (by default).
+6. Conduct a line search to find the optical step size, with a maximum update of ~2% (by default). The [golden section search](https://en.wikipedia.org/wiki/Golden-section_search) is used for this.
 7. Apply the scaled gradient to the velocity model to calculate the starting model for the next iteration (steepest descent).
 
 At each step the stats are saved, including misfit, model misfit, and step size.
@@ -430,9 +457,9 @@ print(inverter.results)
 
 So users can specify stopping criteria and just break out of the loop.
 
-If the simplistic line search algorithm can't find a stepsize to reduce the misfit, then a `FailedLineSearch` Error will be raised. Once the optimal step size is found, the model is updated (via simple steepest descent) and results for the current iteration are saved in the subdirectory "ITERATIONS". 
+If the simplistic line search algorithm can't find a stepsize to reduce the misfit, then a `FailedLineSearch` Error will be raised. Once the optimal step size is found, the model is updated (via simple steepest descent) and results for the current iteration are saved in the subdirectory "ITERATIONS".
 
-The model updates for the three iterations above are: 
+The model updates for the three iterations above are:
 
 ![FWI model updates by iteration](outputs/a066_model_updates.png)
 

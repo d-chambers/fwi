@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     import specster as sp
-    from specster.fwi.misfit import WaveformMisFit
+    from specster.fwi.misfit import WaveformMisfit
 
     true_path = local.single_single_kernel_true_path
 
@@ -32,8 +32,8 @@ if __name__ == "__main__":
     st_initial = control_initial.output.get_waveforms()
 
     # calculate adjoint source
-    misfitter = WaveformMisFit(st_true, st_initial)
-    adjoint_source = misfitter.get_adjoint_sources()
+    misfitter = WaveformMisfit()
+    adjoint_source = misfitter.get_adjoint_sources(st_true, st_initial)
     adjoint_source.plot(outfile=local.adjoint_plot_path, show=False)
 
     # write adjoints to initial and run

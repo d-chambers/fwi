@@ -1,18 +1,16 @@
 """
 Create a split of the inclusion with homogeneous velocity.
 """
-from pathlib import Path
 
 import local
-import matplotlib.pyplot as plt
 import specster as sp
-from specster.fwi.misfit import WaveformMisfit
+from specster.fwi.misfit import TravelTimeMisfit
 
 if __name__ == "__main__":
     control_initial = sp.Control2d(local.inclusion_2d_initial_path)
     control_true = sp.Control2d(local.inclusion_2d_true_path)
-    if local.fwi_work_path.exists():
-        inverter = sp.Inverter.load_inverter(local.fwi_work_path)
+    if local.fwi_tt_work_path.exists():
+        inverter = sp.Inverter.load_inverter(local.fwi_tt_work_path)
     else:
         inverter = sp.Inverter(
             # Specifies where true data are found
@@ -22,10 +20,10 @@ if __name__ == "__main__":
             # A "true" control object is needed to compare model misfit
             true_control=control_true,
             # The working_path optionally specifies where the inverter does its work
-            working_path=local.fwi_work_path,
-            misfit=WaveformMisfit(),
+            working_path=local.fwi_tt_work_path,
+            misfit=TravelTimeMisfit(),
             kernels=("beta",),
         )
-    inverter._max_iteration_change = .06
+    inverter._max_iteration_change = 0.06
     for _ in range(10):
         inverter.run_iteration()
