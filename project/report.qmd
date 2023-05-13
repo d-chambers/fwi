@@ -24,7 +24,7 @@ header-includes:
 
 # Introduction
 
-This report is submitted in fulfillment of the term project for GPGN 598A: Full Waveform Inversion (FWI) taken at the Colorado School of Mines in spring of 2023. In order to learn the important implementation details of FWI workflows and the intricacies of Specfem2D, which I used as the wavefield solver, I opted to create a python package for conducting this project rather than using existing workflow solutions, such as [seisflows](https://github.com/adjtomo/seisflows). The python implementation is called [specster](https://github.com/d-chambers/specster) and it consists of nearly 2000 lines of python implementation code and 500 lines of test code (with several hundred tests in total). This report will highlight the use of the specster library in order to interact with Specfem2D and conduct a few iterations of a simple FWI. This package may be useful to other students in the future, but currently it is only a prototype which will required additional work before it is "production-grade."
+This report is submitted in fulfillment of the term project for GPGN 598A: Full Waveform Inversion (FWI) taken at the Colorado School of Mines in spring of 2023. In order to learn the important implementation details of FWI workflows and the intricacies of Specfem2D, which I used as the wavefield solver, I opted to create a python package for conducting this project rather than using existing workflow solutions, such as [seisflows](https://github.com/adjtomo/seisflows). The python implementation is called [specster](https://github.com/d-chambers/specster) and it consists of nearly 2000 lines of python implementation code and 500 lines of test code (with several hundred tests in total). This report will highlight the use of the specster library in order to interact with Specfem2D and conduct a few iterations of a simple FWI. This package may be useful to other students in the future, but currently it is only a prototype which will required additional work before it is ready for public use.
 
 # Installation
 
@@ -84,9 +84,9 @@ Sources are shown as red stars, receivers as triangles, and grid quantities (in 
 
 ## Running a forward simulation and output inspection
 
-Forward simulations are run with the `Control2d.run` method. You will see the Specfem2d piped to the terminal or notebook upon calling this method.
+Forward simulations are run with the `Control2d.run` method. You will see the Specfem2d output piped to the terminal or notebook upon calling this method. The output is also written to the output directory so it can be checked later. 
 
-`Control2d.run` is able to figure out which programs to run based on values in the par file. For example, if the par file specifies an external mesh, it will not run the meshing program.
+`Control2d.run` is able to figure out which programs to run based on values in the par file. For example, if the par file specifies an external mesh, it will not run the xmesh2d.
 
 ```python
 import shutil
@@ -108,7 +108,7 @@ control = (
 output = control.run()
 ```
 
-The outputs of the runs are accessed via the `output` parameter which is a `Output2D` object. `Output2D` has many useful methods for accessing information about the run results. For example, `output.get_waveforms` loades the resulting waveforms  as an [obspy.Stream](https://docs.obspy.org/packages/autogen/obspy.core.stream.Stream.html) object.
+The outputs of the runs are accessed via the `output` parameter which is a `Output2D` object. `Output2D` has many useful methods for accessing information about the run results. For example, `output.get_waveforms` loads the resulting waveforms as an [obspy.Stream](https://docs.obspy.org/packages/autogen/obspy.core.stream.Stream.html) object.
 
 ```python
 st = output.get_waveforms()  # get obspy streams
@@ -140,7 +140,7 @@ output.plot_gll_per_wavelength_histogram()
 
 # Modifying stations and sources
 
-Stations and sources can be modified directly through the `station` and `sources` parameter, making it much more convenient to modify the experiment geometry than manually editing text files. Specster also provides some validation in this aspect to help reduce errors. Here are a few examples:
+Stations and sources can be modified directly through the `station` and `sources` parameter, making it much more repeatable to modify the experiment geometry than manually editing text files. Specster also provides some validation in this aspect to help reduce errors. Here are a few examples:
 
 Make a copy, remove all but one station, add another source, and plot geometry (@fig-modified_geometry).
 
@@ -191,8 +191,7 @@ Once all changes have been made, we need to write the control state back to disk
 control.write(overwrite=True)
 ```
 
-Of course, you can just modify the par_file directly in a text editor then
-create a new `Control2d` object to update the state.
+Of course, you can just modify the par_file directly in a text editor then create a new `Control2d` object to update the state.
 
 
 # Updating the models
@@ -247,7 +246,7 @@ control.plot_geometry(kernel=('vp', 'vs'))
 
 # Full Waveform Inversion
 
-Specster provides a few different abstraction levels for performing full waveform inversion. Using `Control2d` directly is the lowest level of abstraction, and provides the most control over the inersion process.
+Specster provides a few different abstraction levels for performing full waveform inversion. Using `Control2d` directly is the lowest level of abstraction, and provides the most control over the inversion process.
 
 ## Single event-station kernel calculation
 
@@ -364,8 +363,7 @@ Waveforms can also be windowed by creating a windowing dataframe, which will tel
 
 ## Multiple Events and Multiple Stations
 
-For the full FWI worklow, the
-First, I will demonstrate a multi-event multi-station workflow. One simple case is to use a nearly homogeneous velocity model with a small inclusion in the center and very good coverage of events and stations. Specster's "inclusion_2d" dataset was created for this purpose.
+For the full FWI worklow needs to account for multiple events and stations. One simple case is to use a nearly homogeneous velocity model with an inclusion in the center and very good coverage of events and stations. Specster's "inclusion_2d" dataset was created for this purpose.
 
 ```python
 import specster as sp
@@ -382,7 +380,7 @@ Next, we need to split each source into a separate run (Specster doesn't do sour
 control_true.run_each_source()
 ```
 
-This will create a directory called "EACH_SOURCE" and populate it with copies of the specfem DATA directories although each has been modified to only include one source. The source directories are simply numbered sequentially starting with "000000".
+This will create a directory called "EACH_SOURCE" and populate it with copies of the specfem DATA directories although each has been modified to only include a single source. The source directories are simply numbered sequentially starting with "000000".
 
 These will represent our "True" waveforms. Of course, we also need an initial model and data. For this, we will start with a homogenous background model.
 
@@ -402,8 +400,7 @@ fig, *_ = control_initial.plot_geometry(kernel='vs')
 
 ![Inclusion starting model](outputs/a062_inclusion_geometry.png)
 
-
-It will then get tedious to work with multiple `Control2d` objects for each source, but Specster provides a higher level control class for facilitating the FWI workflow.
+It will then get tedious to work with multiple `Control2d` objects for each source, but Specster provides a higher level control class for facilitating the FWI workflow called `Inverter`.
 
 ```python
 import specster as sp
@@ -425,22 +422,21 @@ inverter = sp.Inverter(
 
 We can then run a single iteration of the inversion like so:
 
-
 ```python
 inverter.run_iteration()
 ```
 
-`Inverter` is extensible through inheritance but here is the basic workflow conducted with run iteration:
+`Inverter` is extensible through both initialization parameters (see its docs) and also inheritance, but here is the basic workflow conducted with `run_iteration`:
 
-1. Ensure the run has been split for each source.
-2. Run the forward problem for each source.
-3. Calculate misfit and adjoint sources for each source. Save adjoints to each source data directory
-4. Run all sources in adjoint mode.
-5. Sum the gradients for each source after preconditioning with the approximated Hessian provided by Specfem2D and applying a median filter to the station locations in the gradient.
-6. Conduct a line search to find the optical step size, with a maximum update of ~2% (by default). The [golden section search](https://en.wikipedia.org/wiki/Golden-section_search) is used for this.
-7. Apply the scaled gradient to the velocity model to calculate the starting model for the next iteration (steepest descent).
+1. Ensure each source has its own specfem files
+2. Run the forward problem for each source
+3. Calculate misfit and adjoint sources for each source then save adjoints to each source data directory
+4. Run all sources in adjoint mode
+5. Sum the gradients for each source after preconditioning with the approximated Hessian provided by Specfem2D and applying a median filter to the station locations in the gradient (can be disabled based on `hessian_preconditioning` parameter)
+6. Conduct a line search to find the optical step size, with a maximum update of ~2% (by default). Specster uses a simple [golden section search](https://en.wikipedia.org/wiki/Golden-section_search) 
+7. Apply the scaled gradient to the velocity model to calculate the starting model for the next iteration (steepest descent)
 
-At each step the stats are saved, including misfit, model misfit, and step size.
+At each step the inversion state is checkpointed, including misfit, model misfit, and step size. That way the inversion can be restarted from any point.
 
 To run 3 iterations:
 
@@ -455,21 +451,104 @@ A list of results are stored for each iteration
 print(inverter.results)
 ```
 
-So users can specify stopping criteria and just break out of the loop.
+Stopping criteria can be manually specified and the loop exited when those are met. An existing inverter can be loaded via `load_inverter`:
 
-If the simplistic line search algorithm can't find a stepsize to reduce the misfit, then a `FailedLineSearch` Error will be raised. Once the optimal step size is found, the model is updated (via simple steepest descent) and results for the current iteration are saved in the subdirectory "ITERATIONS".
+```python
+import specster as sp
 
-The model updates for the three iterations above are:
+inverter = sp.Inverter.load_inverter("inverter/working/directory")
+```
 
-![FWI model updates by iteration](outputs/a066_model_updates.png)
+If the simplistic line search algorithm can't find a stepsize to reduce the misfit, then a `FailedLineSearch` Error will be raised. Once the optimal step size is found, the model is updated and results for the current iteration are saved in the subdirectory "ITERATIONS".
 
-and comparing the final and true models:
+Running the previous example for 15 iterations yields the following model (top) compared to the true model (bottom). Each iteration took about 10 minutes to run.
 
-![Final vs true model](outputs/a066_final_model.png)
+![Final vs true model](outputs/a064_fwi_workpath/final_model.png)
+
+Using the data stored in the inverter, we can also plot the convergence as a function of iteration for data misfit, and, since we know the true model in this case, model misfit (L2 norm of the difference between VS models). 
+
+![Model convergence](outputs/a064_fwi_workpath/mode_convergence.png)
+
+A few things to note about this example. First, although the outline of the inclusion is visible, there is still quite a bit of smearing. Also note that the station imprints are not completely removed as there are dashes of lower velocity outside the inclusion. A few options exist that might improve the results. First, rather than waveform misfit, travel_time might be more robust. Also, there was no smoothing applied here, but if the `smoothing_sigma` parameter is defined when creating an `Inverter` instance, it may help remove the artifacts outside the inclusion.
 
 # Conclusions
 
-Creating Specster helped me to better understand a variety of topics including Specfem2d and the general FWI workflow. Although it still lacks some features, it was a constructive educational endeavour.
+Creating Specster helped me to better understand a variety of topics including Specfem2d and the general FWI workflow. Although it still lacks some major features, like L-BFGS for model updates and various misfit functions, it may be a useful tool for future FWI research.
+
+# Appendix A: FWI of an Acoustic Reflector
+
+This appendix provides an example of using specster to detect an acoustic reflector, similar to an RTM type workflow. In this case we will only run one iteration and use the kernel as an "image" which will help highlight the location of the reflector.
+
+## Setup true and initial models
+
+First, the ture and initial model are created.
+
+```python
+# true model creation
+from pathlib import Path
+
+import specster as sp
+
+true_path = Path("true_model")
+
+true_cont = sp.load_2d_example("acoustic_reflector").copy(true_path)
+true_cont.par.visualizations.postscript.output_postscript_snapshot = False
+true_cont.par.nstep = 2200
+true_cont.write(overwrite=True)
+true_cont.run_each_source()
+true_cont.prepare_fwi_forward().run()
+
+true_cont.plot_geometry(kernel=('vp',))
+```
+
+![](outputs/a110_acoustic_ref_true/geometry.png)
 
 
-# References
+
+```python
+# initial model creation
+from pathlib import Path
+
+import specster as sp
+
+initial_path = Path("initial_model")
+
+init_cont = sp.load_2d_example("acoustic_reflector").copy(initial_path)
+init_cont.par.visualizations.postscript.output_postscript_snapshot = False
+init_cont.par.nstep = 2200
+init_cont.write(overwrite=True)
+init_cont.run_each_source()
+init_cont.prepare_fwi_forward().run()
+
+init_cont.plot_geometry(kernel=('vp',))
+```
+
+![](outputs/a110_acoustic_ref_initial/geometry.png)
+
+
+Then the Inverter is created and one iteration run without preconditioning or updating the model.
+
+```python
+import specster as sp 
+from specster.fwi.misfit import WaveformMisfit
+
+inverter = sp.Inverter(
+    # Specifies where true data are found
+    observed_data_path=true_cont.each_source_path,
+    # The initial control is used to setup the inversion
+    control=control_initial,
+    # A "true" control object is needed to compare model misfit
+    true_control=init_cont,
+    # The working_path optionally specifies where the inverter does its work
+    working_path="acoustic_reflector_fwi_path",
+    hessian_preconditioning=False,
+    misfit=WaveformMisfit(),
+    kernels=("c",),
+)
+inverter.run_iteration(no_update=True)
+```
+
+Plotting the resulting c kernel we see the reflector interface is illuminated for the center of the model. However, there isn't sufficient data coverage to illuminate the reflector interface near the edges. An imprint of the source frequency is also visible, somewhat "smearing" the reflectors surface. However, the image still provides useful information about the surface of the third layer.
+
+![](outputs/a112_acoustic_ref_fwi/model_updates.png)
+

@@ -4,6 +4,7 @@ Create a split of the inclusion with homogeneous velocity.
 
 import local
 import specster as sp
+import matplotlib.pyplot as plt
 from specster.fwi.misfit import TravelTimeMisfit
 
 if __name__ == "__main__":
@@ -27,3 +28,15 @@ if __name__ == "__main__":
     inverter._max_iteration_change = 0.06
     for _ in range(10):
         inverter.run_iteration()
+
+    fig1, _ = local.plot_model_updates(inverter)
+    plt.tight_layout()
+    fig1.savefig(local.fwi_tt_work_path / "model_updates.png", bbox_inches="tight", pad_inches=0)
+    # now plot final model.
+    fig2, ax = local.plot_final_model(inverter)
+    plt.tight_layout()
+    fig2.savefig(local.fwi_tt_work_path / "final_model.png", bbox_inches="tight", pad_inches=0)
+    # plot misfit by iteration.
+    fig3, ax = local.plot_misfit(inverter)
+    plt.tight_layout()
+    fig3.savefig(local.fwi_tt_work_path / "mode_convergence.png")

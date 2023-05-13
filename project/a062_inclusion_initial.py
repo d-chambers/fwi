@@ -13,15 +13,7 @@ if __name__ == "__main__":
         .copy(local.inclusion_2d_initial_path)
         .prepare_fwi_forward()
     )
-
-    # set model number 2 to have the same properties as mod 1
-    # this homogenises the model
-    models = control_initial.par.material_models.models
-    models[1].Vs = models[0].Vs
-    models[1].Vp = models[0].Vp
-    models[1].rho = models[0].rho
-    control_initial.write(overwrite=True)
-    control_initial.run_each_source()
+    local.create_initial_model(control_initial)
 
     fig, *_ = control_initial.plot_geometry(kernel="vs", overwrite=True)
 
