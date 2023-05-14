@@ -132,7 +132,7 @@ def load_model_updates(inverter):
 def plot_model_updates(inverter, kernel='beta'):
     """First load all the update dataframes."""
     models = load_model_updates(inverter)
-    fig, axes = plt.subplots(len(models), 1, figsize=(4, 6))
+    fig, axes = plt.subplots(len(models), 1)
     if isinstance(axes, plt.Axes):
         axes = [axes]
     for (iteration, model), ax in zip(models.items(), axes):
